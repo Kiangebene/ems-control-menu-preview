@@ -58,3 +58,65 @@
 @media(max-width:1200px){.lg-topnav-caption{max-width:130px}.lg-topnav-brand span{display:none;}.lg-topnav-primary{gap:5px;}}
 @media(max-width:820px){.lg-sidebar--rail.lg-sidebar-mobile-open .lg-rail-item{width:100%;justify-content:flex-start;padding:0 11px}.lg-main .lg-topnav{margin:10px 9px 13px;top:9px;}.lg-topnav-caption{display:none}.lg-topnav-brand{display:none}.lg-topnav-tab{font-size:11px;padding:8px 11px}.lg-topnav-secondary{padding-left:5px;}.lg-topnav-secondary-label{display:none}.lg-sidebar--rail.lg-sidebar-mobile-open .lg-group-name{display:flex!important}}
 @media(prefers-reduced-motion:reduce){.lg-topnav-tabs{scroll-behavior:auto}.lg-topnav-tab,.lg-topnav-subtab{transition:none!important}}
+/* ========== V2.1: CONTEXTUAL CAPSULE, NOT A FULL-WIDTH HEADER ==========
+   Solvik-inspired compact navigation. These selectors do not touch dashboard
+   cards, charts, colours or the LuxGrowth side rail. */
+.lg-main .lg-topnav {
+  width: max-content;
+  max-width: min(900px, calc(100% - 28px));
+  margin: 12px auto 19px;
+}
+.lg-topnav .lg-topnav-primary {
+  width: max-content;
+  max-width: 100%;
+  padding: 5px 7px;
+  gap: 5px;
+  border-radius: 999px;
+}
+.lg-topnav .lg-topnav-caption {
+  flex: 0 1 auto;
+  max-width: 144px;
+  padding: 0 9px 0 10px;
+}
+.lg-topnav .lg-topnav-tabs-wrap {
+  flex: 0 1 auto;
+  max-width: 720px;
+  min-width: 0;
+  gap: 3px;
+}
+.lg-topnav .lg-topnav-tabs {
+  flex: 0 1 auto;
+  width: max-content;
+  max-width: 100%;
+  min-width: 0;
+  gap: 2px;
+}
+.lg-topnav .lg-topnav-tab {
+  min-height: 32px;
+  padding: 6px 11px;
+}
+.lg-topnav .lg-topnav-scroll {
+  width: 27px;
+  height: 27px;
+}
+/* Branding is already visible in the left rail; avoid duplicated labels. */
+.lg-topnav .lg-topnav-brand { display: none; }
+.lg-topnav .lg-topnav-secondary {
+  max-width: min(900px, 100%);
+  padding-left: 6px;
+}
+@media (max-width: 820px) {
+  .lg-main .lg-topnav {
+    width: calc(100% - 18px);
+    max-width: calc(100% - 18px);
+    margin: 10px auto 14px;
+  }
+  .lg-topnav .lg-topnav-primary {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 18px;
+  }
+  .lg-topnav .lg-topnav-tabs-wrap,
+  .lg-topnav .lg-topnav-tabs { flex: 1 1 auto; }
+  .lg-topnav .lg-topnav-tabs-wrap { max-width: 100%; }
+}
