@@ -128,7 +128,7 @@ export function LuxGrowthSidebar({ currentPage, onPageChange, isDark, onThemeTog
         </button>
         <div className="lg-when-expanded lg-wordmark"><strong>LuxGrowth</strong><small>Growth OS</small></div>
         <button className="lg-collapse" type="button" aria-label={expanded ? 'Recolher menu' : 'Expandir menu'}
-          title={expanded ? 'Recolher menu' : 'Expandir menu'} onClick={() => setExpanded(v => !v)}>
+          title={expanded ? 'Recolher menu' : 'Expandir menu'} onClick={() => { if (expanded && navigationMode === 'sidebar') setMode('top'); setExpanded(v => !v); }}>
           {expanded ? <ChevronLeft size={17} /> : <ChevronRight size={17} />}
         </button>
       </div>
