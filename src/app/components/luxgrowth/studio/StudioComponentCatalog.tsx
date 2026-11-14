@@ -6,11 +6,11 @@ import { Plus, Search, Layers3 } from 'lucide-react';
  * feat/website-studio-unified-editor-20261102 branch of luxgrowth-ia.
  *
  * This prototype intentionally does NOT embed Forma runtime or import its
- * canonical contracts. Only the four V6 section kinds below can be added.
- * Other entries are future integration targets, NOT runnable components.
+ * canonical contracts. Four V6 native section kinds plus two local-only blocks can be added.
+ * Image and Divider are local-only, excluded from native publication export. Other entries are future integration targets.
  * No production endpoint, tenant data or publication action is used.
  */
-type SectionKind = 'hero' | 'text' | 'features' | 'cta';
+type SectionKind = 'hero' | 'text' | 'features' | 'cta' | 'image' | 'divider';
 type CatalogItem = {
   id: string;
   label: string;
@@ -36,7 +36,7 @@ const GROUPS: Group[] = [
     ['flex', 'Flex', 'Disposição flexível'],
     ['grid', 'Grid', 'Grelha responsiva'],
     ['columns', 'Colunas', 'Distribuição horizontal'],
-    ['divider', 'Divisor', 'Separador visual'],
+    ['divider', 'Divisor', 'Separador visual', 'divider'],
     ['spacer', 'Espaçador', 'Espaço entre elementos'],
   ]),
   group('Estrutura', [
@@ -52,7 +52,7 @@ const GROUPS: Group[] = [
     ['link', 'Ligação', 'Navegação e âncoras'],
   ]),
   group('Multimédia', [
-    ['image', 'Imagem', 'Imagem individual'],
+    ['image', 'Imagem', 'Imagem individual', 'image'],
     ['video', 'Vídeo', 'Conteúdo audiovisual'],
     ['icon', 'Ícone', 'Representação visual'],
     ['gallery', 'Galeria', 'Coleção de imagens'],

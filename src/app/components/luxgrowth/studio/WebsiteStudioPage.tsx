@@ -11,7 +11,7 @@ import './studio-sidebar-tabs.css';
 
 type Site = { id: string; name: string; domain: string; accent?: string; description?: string };
 type CmsContent = { id: string; websiteId: string; title: string; body: string; excerpt: string; type?: string; slug?: string };
-type SectionKind = 'hero' | 'text' | 'features' | 'cta';
+type SectionKind = 'hero' | 'text' | 'features' | 'cta' | 'image' | 'divider';
 type HeroImageSettings = {opacityPct?:number;positionX?:number;positionY?:number;fit?:'cover'|'contain';zoomPct?:number;offsetX?:number;offsetY?:number};
 type Section = {
   id: string; kind: SectionKind; kicker: string; title: string; body: string;
@@ -37,6 +37,8 @@ const TYPES: { kind: SectionKind; label: string; detail: string }[] = [
   { kind: 'text', label: 'Texto', detail: 'Conteúdo editorial' },
   { kind: 'features', label: 'Benefícios', detail: 'Três colunas de destaques' },
   { kind: 'cta', label: 'Chamada à ação', detail: 'Mensagem e botão' },
+  { kind: 'image', label: 'Imagem', detail: 'Imagem da biblioteca local' },
+  { kind: 'divider', label: 'Divisor', detail: 'Separador visual' },
 ];
 const blockId = () => typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : 'section-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
 const copySections = (items: Section[]) => items.map(item => ({ ...item, items: [...item.items],heroImage:item.heroImage?{...item.heroImage}:undefined,presentation:item.presentation?{...item.presentation}:undefined }));
@@ -59,6 +61,8 @@ function makeSection(kind: SectionKind, page?: CmsContent): Section {
     case 'features': return { id:blockId(),kind,kicker:'O QUE FAZEMOS',title:'A nossa diferença',body:'Conhece o que nos torna únicos.',buttonLabel:'',items:['Qualidade e atenção','Soluções personalizadas','Resultados com impacto'] };
     case 'cta': return { id:blockId(),kind,kicker:'VAMOS CONVERSAR',title:'Preparado para começar?',body:'Fala connosco e descobre como podemos ajudar.',buttonLabel:'Entrar em contacto',buttonHref:'#contacto',items:[] };
     case 'text': return { id:blockId(),kind,kicker:'SOBRE NÓS',title:'A nossa história',body:page?.body || 'Conta a história da tua marca e apresenta os teus serviços.',buttonLabel:'',items:[] };
+    case 'image': return { id:blockId(),kind,kicker:'IMAGEM',title:'Imagem',body:'Descrição da imagem',buttonLabel:'',items:[] };
+    case 'divider': return { id:blockId(),kind,kicker:'',title:'Separador',body:'',buttonLabel:'',items:[] };
   }
 }
 function initialSections(page?: CmsContent) {
@@ -87,6 +91,11 @@ function EditorPreview({ sections, selectedId, onSelect, site, device, mediaUrls
   '--lg-title-leading':section.presentation?.lineHeight||undefined} as CSSProperties}>
         <button type="button" className="lg-studio-render-edit" onClick={()=>onSelect(section.id)}
           aria-label={'Editar secção '+(index+1)+': '+sectionLabel(section.kind)}>Editar <span>{index+1}</span></button>
+        {section.kind==='image'&&<div className="lg-studio-image-section" onClick={()=>onSelect(section.id)}>
+          {section.mediaId&&mediaUrls[section.mediaId]?<img src={mediaUrls[section.mediaId]} alt={section.body||section.title||'Imagem'} />:<div className="lg-studio-image-empty"><ImageIcon size={26}/><strong>Escolhe uma imagem</strong><small>Seleciona esta secção e abre a biblioteca Media.</small></div>}
+          {section.title&&<strong className="lg-studio-image-caption">{section.title}</strong>}
+        </div>}
+        {section.kind==='divider'&&<div className="lg-studio-divider-section" aria-label="Separador"><span/></div>}
         {section.kind==='hero' && <div className="lg-studio-hero">
           {section.mediaId&&mediaUrls[section.mediaId]&&<HeroImageLayer src={mediaUrls[section.mediaId]} settings={section.heroImage} onCommit={next=>onImageChange(section.id,next)} />}
           <StudioInlineText as="small" label="Etiqueta" value={section.kicker} maxLength={90} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'kicker',value)}/>
@@ -174,7 +183,7 @@ export function WebsiteStudioPage() {
     commit(blocks.map(b=>b.id===selected.id?{...b,presentation}:b),selected.id);
   };
   const changeMedia=(mediaId:string|undefined)=>{
-    if(!selected)return;
+    if(!selected || (selected.kind!=='hero'&&selected.kind!=='image'))return;
     commit(blocks.map(b=>b.id===selected.id?{...b,mediaId}:b),selected.id);
   };
   const changeHeroImage=(key:keyof HeroImageSettings,value:number|'cover'|'contain')=>{
@@ -354,7 +363,6 @@ export function WebsiteStudioPage() {
             <GripVertical size={15}/><span><strong>{sectionLabel(block.kind)}</strong><small>{block.title||'Sem título'}</small></span><em>{i+1}</em>
           </button>)}
         </div>
-            <StudioComponentCatalog onAdd={add}/>
             <button type="button" className="lg-studio-reset" onClick={reset}><RotateCcw size={15}/> Repor estrutura</button>
           </>}
         </div>
@@ -367,9 +375,9 @@ export function WebsiteStudioPage() {
         <div className="lg-studio-panel-heading"><Type size={17}/><strong>Propriedades</strong></div>
         {!selected?<p className="lg-studio-panel-subtitle">Seleciona uma secção para editar o conteúdo.</p>:<>
           <p className="lg-studio-panel-subtitle">{sectionLabel(selected.kind)} · Secção selecionada</p>
-          <label>Etiqueta <input value={selected.kicker} maxLength={90} onChange={e=>change('kicker',e.target.value)}/></label>
-          <label>Título <textarea rows={2} value={selected.title} maxLength={180} onChange={e=>change('title',e.target.value)}/></label>
-          <label>Descrição / texto <textarea rows={5} value={selected.body} maxLength={1000} onChange={e=>change('body',e.target.value)}/></label>
+          {selected.kind!=='divider'&&selected.kind!=='image'&&<label>Etiqueta <input value={selected.kicker} maxLength={90} onChange={e=>change('kicker',e.target.value)}/></label>}
+          {selected.kind!=='divider'&&<label>{selected.kind==='image'?'Legenda':'Título'} <textarea rows={2} value={selected.title} maxLength={180} onChange={e=>change('title',e.target.value)}/></label>}
+          {selected.kind!=='divider'&&<label>{selected.kind==='image'?'Texto alternativo (acessibilidade)':'Descrição / texto'} <textarea rows={selected.kind==='image'?2:5} value={selected.body} maxLength={1000} onChange={e=>change('body',e.target.value)}/></label>}
           {(selected.kind==='hero'||selected.kind==='cta')&&<>
             <label>Texto do botão <input value={selected.buttonLabel} maxLength={65} onChange={e=>change('buttonLabel',e.target.value)}/></label>
             <label>Destino do botão <input type="text" placeholder="#contacto ou https://..." value={selected.buttonHref??'#contacto'} maxLength={320} onChange={e=>change('buttonHref',e.target.value)}/></label>
@@ -378,10 +386,10 @@ export function WebsiteStudioPage() {
             </p>
           </>}
           {selected.kind==='features'&&<div className="lg-studio-feature-fields"><strong>Benefícios</strong>{selected.items.map((v,i)=><label key={i}>Benefício {i+1} <input value={v} maxLength={100} onChange={e=>changeItem(i,e.target.value)}/></label>)}</div>}
-          {selected.kind==='hero'&&<div className="lg-studio-design-fields">
+          {(selected.kind==='hero'||selected.kind==='image')&&<div className="lg-studio-design-fields">
             <strong>Imagem de destaque</strong><button type="button" className="lg-studio-button" onClick={()=>setMediaOpen(true)}><ImageIcon size={15}/> Escolher imagem</button>
-            {selected.mediaId&&(mediaUrls[selected.mediaId]?<div className="lg-studio-media-selected"><img src={mediaUrls[selected.mediaId]} alt="Imagem do Hero"/><button type="button" onClick={()=>changeMedia(undefined)}>Remover associação</button></div>:<p className="lg-studio-panel-subtitle">Imagem indisponível neste navegador.</p>)}
-            {selected.mediaId&&mediaUrls[selected.mediaId]&&<div className="lg-studio-image-controls">
+            {selected.mediaId&&(mediaUrls[selected.mediaId]?<div className="lg-studio-media-selected"><img src={mediaUrls[selected.mediaId]} alt="Imagem da secção"/><button type="button" onClick={()=>changeMedia(undefined)}>Remover associação</button></div>:<p className="lg-studio-panel-subtitle">Imagem indisponível neste navegador.</p>)}
+            {selected.kind==='hero'&&selected.mediaId&&mediaUrls[selected.mediaId]&&<div className="lg-studio-image-controls">
               <p className="lg-studio-panel-subtitle">Arrasta a fotografia diretamente sobre o Hero para ajustar a posição.</p>
               <label>Zoom ({selected.heroImage?.zoomPct??100}%)
                 <input type="range" min="50" max="300" step="5" value={selected.heroImage?.zoomPct??100}
@@ -438,7 +446,7 @@ export function WebsiteStudioPage() {
         </>}
       </aside>
     </div>
-    <div className="lg-studio-footer-note"><FileText size={15}/> Protótipo isolado: rascunhos locais, imagens em IndexedDB e pré-exportação JSON. Imagens locais não são mediaId de produção. Sem publicação.</div>
+    <div className="lg-studio-footer-note"><FileText size={15}/> Protótipo isolado: 6 componentes editáveis, rascunhos locais e imagens em IndexedDB. Imagem/Divisor não são exportáveis para produção. Sem publicação.</div>
     <LocalMediaLibrary open={mediaOpen} siteName={site.name} items={media.items} selectedId={selected?.mediaId} busy={media.busy} error={media.error} onUpload={media.upload} onRemove={media.remove} onSelect={changeMedia} onClose={()=>setMediaOpen(false)}/>
   </section>;
 }

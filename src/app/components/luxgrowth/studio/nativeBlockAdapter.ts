@@ -7,7 +7,7 @@
  */
 export type PrototypeSection = {
   id: string;
-  kind: 'hero' | 'text' | 'features' | 'cta';
+  kind: 'hero' | 'text' | 'features' | 'cta' | 'image' | 'divider';
   kicker: string;
   title: string;
   body: string;
@@ -47,6 +47,11 @@ const ctaHref=(section:PrototypeSection)=>safeHref(section.buttonHref??'#contact
 /** Note: paragraph-only HTML; must still go through the production sanitizer. */
 export function toNativeDraft(section: PrototypeSection, order: number): NativeMapping {
   const common = { id: section.id, order, enabled: true as const, ...(section.presentation?{presentation:section.presentation}:{}) };
+  if(section.kind==='image'||section.kind==='divider') {
+    return {sectionId:section.id,sectionKind:section.kind,supported:false,
+      caveat:'Componente local apenas. Não existe mapeamento validado para o contrato nativo; não importar nem publicar.',
+      draft:{...common,type:'richText',data:{html:'<p>Componente local não exportável: '+escapeHtml(section.kind)+'</p>'}}};
+  }
   if(section.kind === 'hero') {
     return {sectionId:section.id,sectionKind:section.kind,supported:true,
       caveat:[section.mediaId?'Imagem local não exportada: atribuir mediaId real após upload autorizado no SaaS.':'',!ctaHref(section)?'Destino CTA inválido, substituído no rascunho por #contacto.':''].filter(Boolean).join(' ')||undefined,
@@ -91,6 +96,7 @@ export function previewNativeBlocks(sections: PrototypeSection[]) {
     source:'ems-control-menu-preview',
     productionReady:false,
     notice:'Pré-exportação local. Requer validação com websiteBlockSchema, associação a tenant/page/locale e revisão manual antes de qualquer importação.',
+    containsUnsupportedBlocks:sections.some(section=>section.kind==='image'||section.kind==='divider'),
     blocks:sections.map((section,index)=>toNativeDraft(section,index))
   };
 }
