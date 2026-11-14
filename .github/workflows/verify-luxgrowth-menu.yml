@@ -7,6 +7,7 @@ on:
       - feat/luxgrowth-websites-foundation-v1
       - feat/luxgrowth-cms-prototype-v1
       - feat/luxgrowth-website-studio-prototype-v1
+      - feat/luxgrowth-studio-workspace-v1-1
   workflow_dispatch:
 permissions:
   contents: read
