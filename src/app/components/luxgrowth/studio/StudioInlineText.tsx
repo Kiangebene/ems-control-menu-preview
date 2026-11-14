@@ -24,12 +24,13 @@ export function StudioInlineText({
   const Tag=as;
   const [editing,setEditing]=useState(false);
   const [draft,setDraft]=useState(value);
-  const inputRef=useRef<HTMLInputElement|HTMLTextAreaElement|null>(null);
+  const inputRef=useRef<HTMLInputElement|null>(null);
+  const areaRef=useRef<HTMLTextAreaElement|null>(null);
   const cancelBlur=useRef(false);
   useEffect(()=>{if(!editing)setDraft(value);},[value,editing]);
   useEffect(()=>{
     if(editing){
-      const element=inputRef.current;
+      const element=multiline?areaRef.current:inputRef.current;
       element?.focus();
       if(element && 'select' in element)element.select();
     }
@@ -60,10 +61,10 @@ export function StudioInlineText({
     onDoubleClick={event=>{event.stopPropagation();onSelect();cancelBlur.current=false;setDraft(value);setEditing(true);}}>
     {editing
       ? multiline
-        ? <textarea ref={inputRef as React.Ref<HTMLTextAreaElement>} aria-label={'Editar '+label.toLowerCase()} rows={3}
+        ? <textarea ref={areaRef} aria-label={'Editar '+label.toLowerCase()} rows={3}
             maxLength={maxLength} value={draft} onChange={event=>setDraft(event.target.value)}
             onKeyDown={handleKey} onBlur={apply} onClick={event=>event.stopPropagation()} />
-        : <input ref={inputRef as React.Ref<HTMLInputElement>} aria-label={'Editar '+label.toLowerCase()}
+        : <input ref={inputRef} aria-label={'Editar '+label.toLowerCase()}
             maxLength={maxLength} value={draft} onChange={event=>setDraft(event.target.value)}
             onKeyDown={handleKey} onBlur={apply} onClick={event=>event.stopPropagation()} />
       : value || <span className="lg-studio-inline-placeholder">Duplo clique para editar</span>}
