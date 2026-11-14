@@ -18,13 +18,14 @@ export function Layout(){
  const [currentPage,setCurrentPage]=useState(pageFromHash);
  const [isDark,setIsDark]=useLocalSetting<boolean>('ems-original-dashboard-dark-v2',false);
  const [userName,setUserName]=useLocalSetting<string>('ems-demo-name-v1','Liam Gallagher');
+ const [navigationMode,setNavigationMode]=useLocalSetting<'top' | 'sidebar'>('luxgrowth-navigation-mode-v1','top');
  const navigate=useCallback((page:string)=>{if(!destinationFor(page))return;setCurrentPage(page);const hash='#/'+page;if(window.location.hash!==hash)window.location.hash=hash},[]);
  useEffect(()=>{const sync=()=>setCurrentPage(pageFromHash());window.addEventListener('hashchange',sync);return()=>window.removeEventListener('hashchange',sync)},[]);
  useEffect(()=>{document.documentElement.classList.toggle('dark',isDark);return()=>document.documentElement.classList.remove('dark')},[isDark]);
  return <div className="ems-preserved-app lg-app">
-  <LuxGrowthSidebar currentPage={currentPage} onPageChange={navigate} isDark={isDark} onThemeToggle={()=>setIsDark(v=>!v)} userName={userName}/>
-  <main id="main-content" className="ems-preserved-content lg-main">
-   <LuxGrowthTopNav currentPage={currentPage} onPageChange={navigate} />
+  <LuxGrowthSidebar currentPage={currentPage} onPageChange={navigate} isDark={isDark} onThemeToggle={()=>setIsDark(v=>!v)} userName={userName} navigationMode={navigationMode} onNavigationModeChange={setNavigationMode}/>
+  <main id="main-content" className={'ems-preserved-content lg-main' + (navigationMode === 'sidebar' ? ' lg-main--vertical-nav' : '')}>
+   {navigationMode === 'top' && <LuxGrowthTopNav currentPage={currentPage} onPageChange={navigate} />}
    <div className="lg-current-page" key={currentPage}>
    {currentPage==='dashboard'&&<Dashboard/>}
    {currentPage==='analytics'&&<Analytics/>}
