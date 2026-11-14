@@ -234,3 +234,9 @@
 .lg-studio-image-empty strong{font-size:14px}.lg-studio-image-empty small{font-size:11px}
 .lg-studio-image-caption{font-size:13px;font-weight:600;text-align:center}
 .lg-studio-divider-section{padding:28px 34px;cursor:pointer}.lg-studio-divider-section span{display:block;width:100%;height:1px;background:currentColor;opacity:.28}
+
+/* Local-only V10 heading and button blocks. Keep existing editor structure. */
+.lg-studio-heading-section{padding:var(--lg-pad-top,36px) 38px var(--lg-pad-bottom,36px);min-height:105px}
+.lg-studio-heading-section h2{font-family:var(--lg-title-font,inherit);font-size:var(--lg-title-size,clamp(26px,3vw,42px));font-weight:var(--lg-title-weight,700);line-height:var(--lg-title-leading,1.18);margin:0}
+.lg-studio-button-section{display:flex;justify-content:inherit;align-items:center;min-height:110px;padding:var(--lg-pad-top,30px) 38px var(--lg-pad-bottom,30px)}
+.lg-studio-button-section .lg-studio-cta-button{display:inline-flex;align-items:center;justify-content:center;border-radius:9px;cursor:text}

@@ -11,7 +11,7 @@ import './studio-sidebar-tabs.css';
 
 type Site = { id: string; name: string; domain: string; accent?: string; description?: string };
 type CmsContent = { id: string; websiteId: string; title: string; body: string; excerpt: string; type?: string; slug?: string };
-type SectionKind = 'hero' | 'text' | 'features' | 'cta' | 'image' | 'divider';
+type SectionKind = 'hero' | 'text' | 'features' | 'cta' | 'image' | 'divider' | 'heading' | 'button';
 type HeroImageSettings = {opacityPct?:number;positionX?:number;positionY?:number;fit?:'cover'|'contain';zoomPct?:number;offsetX?:number;offsetY?:number};
 type Section = {
   id: string; kind: SectionKind; kicker: string; title: string; body: string;
@@ -39,6 +39,8 @@ const TYPES: { kind: SectionKind; label: string; detail: string }[] = [
   { kind: 'cta', label: 'Chamada à ação', detail: 'Mensagem e botão' },
   { kind: 'image', label: 'Imagem', detail: 'Imagem da biblioteca local' },
   { kind: 'divider', label: 'Divisor', detail: 'Separador visual' },
+  { kind: 'heading', label: 'Título', detail: 'Título independente' },
+  { kind: 'button', label: 'Botão', detail: 'Botão de chamada à ação' },
 ];
 const blockId = () => typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : 'section-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
 const copySections = (items: Section[]) => items.map(item => ({ ...item, items: [...item.items],heroImage:item.heroImage?{...item.heroImage}:undefined,presentation:item.presentation?{...item.presentation}:undefined }));
@@ -63,6 +65,8 @@ function makeSection(kind: SectionKind, page?: CmsContent): Section {
     case 'text': return { id:blockId(),kind,kicker:'SOBRE NÓS',title:'A nossa história',body:page?.body || 'Conta a história da tua marca e apresenta os teus serviços.',buttonLabel:'',items:[] };
     case 'image': return { id:blockId(),kind,kicker:'IMAGEM',title:'Imagem',body:'Descrição da imagem',buttonLabel:'',items:[] };
     case 'divider': return { id:blockId(),kind,kicker:'',title:'Separador',body:'',buttonLabel:'',items:[] };
+    case 'heading': return { id:blockId(),kind,kicker:'',title:'Um título marcante',body:'',buttonLabel:'',items:[] };
+    case 'button': return { id:blockId(),kind,kicker:'',title:'Botão',body:'',buttonLabel:'Saiba mais',buttonHref:'#contacto',items:[] };
   }
 }
 function initialSections(page?: CmsContent) {
@@ -96,6 +100,8 @@ function EditorPreview({ sections, selectedId, onSelect, site, device, mediaUrls
           {section.title&&<strong className="lg-studio-image-caption">{section.title}</strong>}
         </div>}
         {section.kind==='divider'&&<div className="lg-studio-divider-section" aria-label="Separador"><span/></div>}
+        {section.kind==='heading'&&<div className="lg-studio-heading-section"><StudioInlineText as="h2" label="Título" value={section.title} maxLength={180} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'title',value)}/></div>}
+        {section.kind==='button'&&<div className="lg-studio-button-section"><StudioInlineText as="span" className="lg-studio-cta-button" label="Texto do botão" value={section.buttonLabel||'Saiba mais'} maxLength={65} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'buttonLabel',value)}/></div>}
         {section.kind==='hero' && <div className="lg-studio-hero">
           {section.mediaId&&mediaUrls[section.mediaId]&&<HeroImageLayer src={mediaUrls[section.mediaId]} settings={section.heroImage} onCommit={next=>onImageChange(section.id,next)} />}
           <StudioInlineText as="small" label="Etiqueta" value={section.kicker} maxLength={90} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'kicker',value)}/>
@@ -375,10 +381,10 @@ export function WebsiteStudioPage() {
         <div className="lg-studio-panel-heading"><Type size={17}/><strong>Propriedades</strong></div>
         {!selected?<p className="lg-studio-panel-subtitle">Seleciona uma secção para editar o conteúdo.</p>:<>
           <p className="lg-studio-panel-subtitle">{sectionLabel(selected.kind)} · Secção selecionada</p>
-          {selected.kind!=='divider'&&selected.kind!=='image'&&<label>Etiqueta <input value={selected.kicker} maxLength={90} onChange={e=>change('kicker',e.target.value)}/></label>}
-          {selected.kind!=='divider'&&<label>{selected.kind==='image'?'Legenda':'Título'} <textarea rows={2} value={selected.title} maxLength={180} onChange={e=>change('title',e.target.value)}/></label>}
-          {selected.kind!=='divider'&&<label>{selected.kind==='image'?'Texto alternativo (acessibilidade)':'Descrição / texto'} <textarea rows={selected.kind==='image'?2:5} value={selected.body} maxLength={1000} onChange={e=>change('body',e.target.value)}/></label>}
-          {(selected.kind==='hero'||selected.kind==='cta')&&<>
+          {selected.kind!=='divider'&&selected.kind!=='image'&&selected.kind!=='heading'&&selected.kind!=='button'&&<label>Etiqueta <input value={selected.kicker} maxLength={90} onChange={e=>change('kicker',e.target.value)}/></label>}
+          {selected.kind!=='divider'&&selected.kind!=='button'&&<label>{selected.kind==='image'?'Legenda':'Título'} <textarea rows={2} value={selected.title} maxLength={180} onChange={e=>change('title',e.target.value)}/></label>}
+          {selected.kind!=='divider'&&selected.kind!=='heading'&&selected.kind!=='button'&&<label>{selected.kind==='image'?'Texto alternativo (acessibilidade)':'Descrição / texto'} <textarea rows={selected.kind==='image'?2:5} value={selected.body} maxLength={1000} onChange={e=>change('body',e.target.value)}/></label>}
+          {(selected.kind==='hero'||selected.kind==='cta'||selected.kind==='button')&&<>
             <label>Texto do botão <input value={selected.buttonLabel} maxLength={65} onChange={e=>change('buttonLabel',e.target.value)}/></label>
             <label>Destino do botão <input type="text" placeholder="#contacto ou https://..." value={selected.buttonHref??'#contacto'} maxLength={320} onChange={e=>change('buttonHref',e.target.value)}/></label>
             <p className={'lg-studio-link-note'+(safeLink(selected.buttonHref??'#contacto')?'':' is-invalid')}>
@@ -446,7 +452,7 @@ export function WebsiteStudioPage() {
         </>}
       </aside>
     </div>
-    <div className="lg-studio-footer-note"><FileText size={15}/> Protótipo isolado: 6 componentes editáveis, rascunhos locais e imagens em IndexedDB. Imagem/Divisor não são exportáveis para produção. Sem publicação.</div>
+    <div className="lg-studio-footer-note"><FileText size={15}/> Protótipo isolado: 8 componentes editáveis, rascunhos locais e imagens em IndexedDB. Imagem, Divisor, Título e Botão são blocos locais não publicáveis. Sem publicação.</div>
     <LocalMediaLibrary open={mediaOpen} siteName={site.name} items={media.items} selectedId={selected?.mediaId} busy={media.busy} error={media.error} onUpload={media.upload} onRemove={media.remove} onSelect={changeMedia} onClose={()=>setMediaOpen(false)}/>
   </section>;
 }

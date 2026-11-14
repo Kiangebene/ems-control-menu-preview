@@ -7,7 +7,7 @@
  */
 export type PrototypeSection = {
   id: string;
-  kind: 'hero' | 'text' | 'features' | 'cta' | 'image' | 'divider';
+  kind: 'hero' | 'text' | 'features' | 'cta' | 'image' | 'divider' | 'heading' | 'button';
   kicker: string;
   title: string;
   body: string;
@@ -47,7 +47,7 @@ const ctaHref=(section:PrototypeSection)=>safeHref(section.buttonHref??'#contact
 /** Note: paragraph-only HTML; must still go through the production sanitizer. */
 export function toNativeDraft(section: PrototypeSection, order: number): NativeMapping {
   const common = { id: section.id, order, enabled: true as const, ...(section.presentation?{presentation:section.presentation}:{}) };
-  if(section.kind==='image'||section.kind==='divider') {
+  if(section.kind==='image'||section.kind==='divider'||section.kind==='heading'||section.kind==='button') {
     return {sectionId:section.id,sectionKind:section.kind,supported:false,
       caveat:'Componente local apenas. Não existe mapeamento validado para o contrato nativo; não importar nem publicar.',
       draft:{...common,type:'richText',data:{html:'<p>Componente local não exportável: '+escapeHtml(section.kind)+'</p>'}}};
@@ -96,7 +96,7 @@ export function previewNativeBlocks(sections: PrototypeSection[]) {
     source:'ems-control-menu-preview',
     productionReady:false,
     notice:'Pré-exportação local. Requer validação com websiteBlockSchema, associação a tenant/page/locale e revisão manual antes de qualquer importação.',
-    containsUnsupportedBlocks:sections.some(section=>section.kind==='image'||section.kind==='divider'),
+    containsUnsupportedBlocks:sections.some(section=>['image','divider','heading','button'].includes(section.kind)),
     blocks:sections.map((section,index)=>toNativeDraft(section,index))
   };
 }
