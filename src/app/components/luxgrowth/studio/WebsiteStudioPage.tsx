@@ -5,6 +5,8 @@ import { LocalMediaLibrary, usePreviewMedia } from './LocalMediaLibrary';
 import { HeroImageLayer } from './HeroImageLayer';
 import { StudioColorField } from './StudioColorField';
 import { StudioInlineText } from './StudioInlineText';
+import { StudioComponentCatalog } from './StudioComponentCatalog';
+import './studio-component-catalog.css';
 
 type Site = { id: string; name: string; domain: string; accent?: string; description?: string };
 type CmsContent = { id: string; websiteId: string; title: string; body: string; excerpt: string; type?: string; slug?: string };
@@ -299,10 +301,7 @@ export function WebsiteStudioPage() {
             <GripVertical size={15}/><span><strong>{sectionLabel(block.kind)}</strong><small>{block.title||'Sem título'}</small></span><em>{i+1}</em>
           </button>)}
         </div>
-        <div className="lg-studio-add-section"><strong><Plus size={14}/> Adicionar secção</strong>
-          <div>{TYPES.map(t=><button type="button" key={t.kind} onClick={()=>add(t.kind)}>
-            <Plus size={13}/><span>{t.label}<small>{t.detail}</small></span></button>)}</div>
-        </div>
+        <StudioComponentCatalog onAdd={add} />
         <button type="button" className="lg-studio-reset" onClick={reset}><RotateCcw size={15}/> Repor estrutura</button>
       </aside>
       <div className="lg-studio-canvas-area" aria-label="Pré-visualização da página">
