@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { ArrowDown, ArrowUp, ChevronDown, Copy, Download, Eye, FileText, Globe2, GripVertical, LayoutTemplate, Monitor, Plus, Redo2, RotateCcw, Save, Smartphone, Trash2, Type, Undo2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, Copy, Download, Eye, FileText, Globe2, GripVertical, ImageIcon, LayoutTemplate, Monitor, Plus, Redo2, RotateCcw, Save, Smartphone, Trash2, Type, Undo2 } from 'lucide-react';
 import { previewNativeBlocks } from './nativeBlockAdapter';
+import { LocalMediaLibrary, usePreviewMedia } from './LocalMediaLibrary';
 
 type Site = { id: string; name: string; domain: string; accent?: string; description?: string };
 type CmsContent = { id: string; websiteId: string; title: string; body: string; excerpt: string; type?: string; slug?: string };
 type SectionKind = 'hero' | 'text' | 'features' | 'cta';
 type Section = {
   id: string; kind: SectionKind; kicker: string; title: string; body: string;
-  buttonLabel: string; items: string[];
+  buttonLabel: string; items: string[]; mediaId?:string; presentation?:{backgroundColor?:string;color?:string;textAlign?:'left'|'center'|'right';paddingTopPx?:number;paddingBottomPx?:number};
 };
 type Device = 'desktop' | 'mobile';
 const SITE_KEY = 'luxgrowth-websites-prototype-v1';
@@ -31,7 +32,7 @@ const TYPES: { kind: SectionKind; label: string; detail: string }[] = [
   { kind: 'cta', label: 'Chamada à ação', detail: 'Mensagem e botão' },
 ];
 const blockId = () => typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : 'section-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
-const copySections = (items: Section[]) => items.map(item => ({ ...item, items: [...item.items] }));
+const copySections = (items: Section[]) => items.map(item => ({ ...item, items: [...item.items],presentation:item.presentation?{...item.presentation}:undefined }));
 function fromStorage<T>(key: string, fallback: T): T {
   try { const raw = window.localStorage.getItem(key); return raw ? JSON.parse(raw) as T : fallback; }
   catch { return fallback; }
@@ -61,17 +62,18 @@ function existingDrafts(): Record<string, Section[]> {
   return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
 }
 function sectionLabel(kind: SectionKind) { return TYPES.find(t=>t.kind===kind)?.label || kind; }
-function EditorPreview({ sections, selectedId, onSelect, site, device }: {
-  sections: Section[];selectedId:string|null;onSelect:(id:string)=>void;site:Site;device:Device
+function EditorPreview({ sections, selectedId, onSelect, site, device, mediaUrls }: {
+  sections: Section[];selectedId:string|null;onSelect:(id:string)=>void;site:Site;device:Device;mediaUrls:Record<string,string>
 }) {
   return <div className={'lg-studio-viewport lg-studio-viewport--'+device} style={{'--studio-accent':site.accent || '#c9f36a'} as CSSProperties}>
     <div className="lg-studio-preview-browser">
       <div className="lg-studio-browser-top"><span/><span/><span/><small>{site.domain || 'website.example'}</small></div>
       <div className="lg-studio-preview-navigation"><strong>{site.name}</strong><span>Início　 Serviços　 Contactos</span></div>
-      {sections.map((section,index)=><section className={'lg-studio-render lg-studio-render--'+section.kind+(section.id===selectedId?' is-selected':'')} key={section.id}>
+      {sections.map((section,index)=><section className={'lg-studio-render lg-studio-render--'+section.kind+(section.id===selectedId?' is-selected':'')} key={section.id} style={{backgroundColor:section.presentation?.backgroundColor||undefined,color:section.presentation?.color||undefined,textAlign:section.presentation?.textAlign||undefined,'--lg-pad-top':section.presentation?.paddingTopPx===undefined?undefined:section.presentation.paddingTopPx+'px','--lg-pad-bottom':section.presentation?.paddingBottomPx===undefined?undefined:section.presentation.paddingBottomPx+'px'} as CSSProperties}>
         <button type="button" className="lg-studio-render-edit" onClick={()=>onSelect(section.id)}
           aria-label={'Editar secção '+(index+1)+': '+sectionLabel(section.kind)}>Editar <span>{index+1}</span></button>
         {section.kind==='hero' && <div className="lg-studio-hero">
+          {section.mediaId&&mediaUrls[section.mediaId]&&<img className="lg-studio-hero-media" src={mediaUrls[section.mediaId]} alt="" />}
           <small>{section.kicker}</small><h2>{section.title}</h2><p>{section.body}</p><span className="lg-studio-cta-button">{section.buttonLabel || 'Saiba mais'}</span>
           <div className="lg-studio-hero-orb" aria-hidden="true"/>
         </div>}
@@ -114,6 +116,9 @@ export function WebsiteStudioPage() {
   const [message,setMessage]=useState('');
   const [showHelp,setShowHelp]=useState(false);
   const [draggedId,setDraggedId]=useState<string|null>(null);
+  const [mediaOpen,setMediaOpen]=useState(false);
+  const media=usePreviewMedia(siteId);
+  const mediaUrls=useMemo(()=>Object.fromEntries(media.items.map(item=>[item.id,item.url])),[media.items]);
   useEffect(()=>{
     const cached=existingDrafts()[draftKey];
     const next=Array.isArray(cached)&&cached.every(b=>b && typeof b.kind==='string') ? copySections(cached) : initialSections(page);
@@ -132,6 +137,17 @@ export function WebsiteStudioPage() {
     if(!selected)return;
     commit(blocks.map(b=>b.id===selected.id?{...b,items:b.items.map((item,i)=>i===index?value:item)}:b),selected.id);
   };
+  const changePresentation=(key:'backgroundColor'|'color'|'textAlign'|'paddingTopPx'|'paddingBottomPx',value:string|number|undefined)=>{
+    if(!selected)return;
+    const presentation={...selected.presentation};
+    if(value===undefined)delete presentation[key];
+    else Object.assign(presentation,{[key]:value});
+    commit(blocks.map(b=>b.id===selected.id?{...b,presentation}:b),selected.id);
+  };
+  const changeMedia=(mediaId:string|undefined)=>{
+    if(!selected)return;
+    commit(blocks.map(b=>b.id===selected.id?{...b,mediaId}:b),selected.id);
+  };
   const add=(kind:SectionKind)=>{
     const block=makeSection(kind);
     commit([...blocks,block],block.id);
@@ -139,7 +155,7 @@ export function WebsiteStudioPage() {
   const duplicate=()=>{
     if(!selected)return;
     const at=blocks.findIndex(s=>s.id===selected.id);
-    const clone={...selected,id:blockId(),items:[...selected.items]};
+    const clone={...selected,id:blockId(),items:[...selected.items],presentation:selected.presentation?{...selected.presentation}:undefined};
     const next=[...blocks];next.splice(at+1,0,clone);commit(next,clone.id);
   };
   const remove=()=>{
@@ -224,6 +240,7 @@ export function WebsiteStudioPage() {
         <button type="button" title="Desfazer" disabled={!undo.length} onClick={backwards}><Undo2 size={16}/></button>
         <button type="button" title="Refazer" disabled={!redo.length} onClick={forwards}><Redo2 size={16}/></button>
       </div>
+      <button type="button" className="lg-studio-button" onClick={()=>setMediaOpen(true)}><ImageIcon size={15}/> Media</button>
       <button type="button" className="lg-studio-button" onClick={exportNativeDraft} title="Exportar prévia dos blocos no formato do Studio original"><Download size={15}/> JSON</button>
       <button type="button" className="lg-studio-button" onClick={()=>setShowHelp(v=>!v)}><Eye size={15}/> Ajuda</button>
       <button type="button" className="lg-studio-button lg-studio-button--save" onClick={save}><Save size={16}/>{dirty?'Guardar alterações':'Guardar rascunho'}</button>
@@ -253,7 +270,7 @@ export function WebsiteStudioPage() {
       </aside>
       <div className="lg-studio-canvas-area" aria-label="Pré-visualização da página">
         <div className="lg-studio-canvas-header"><span><Globe2 size={15}/> {site.domain}</span><span>{device==='desktop'?'Desktop':'Mobile'} · {dirty?'Alterações não guardadas':'Rascunho local'}</span></div>
-        <EditorPreview sections={blocks} selectedId={selectedId} onSelect={setSelectedId} site={site} device={device}/>
+        <EditorPreview sections={blocks} selectedId={selectedId} onSelect={setSelectedId} site={site} device={device} mediaUrls={mediaUrls}/>
       </div>
       <aside className="lg-studio-panel lg-studio-inspector" aria-label="Propriedades da secção selecionada">
         <div className="lg-studio-panel-heading"><Type size={17}/><strong>Propriedades</strong></div>
@@ -264,6 +281,19 @@ export function WebsiteStudioPage() {
           <label>Descrição / texto <textarea rows={5} value={selected.body} maxLength={1000} onChange={e=>change('body',e.target.value)}/></label>
           {(selected.kind==='hero'||selected.kind==='cta')&&<label>Texto do botão <input value={selected.buttonLabel} maxLength={65} onChange={e=>change('buttonLabel',e.target.value)}/></label>}
           {selected.kind==='features'&&<div className="lg-studio-feature-fields"><strong>Benefícios</strong>{selected.items.map((v,i)=><label key={i}>Benefício {i+1} <input value={v} maxLength={100} onChange={e=>changeItem(i,e.target.value)}/></label>)}</div>}
+          {selected.kind==='hero'&&<div className="lg-studio-design-fields">
+            <strong>Imagem de destaque</strong><button type="button" className="lg-studio-button" onClick={()=>setMediaOpen(true)}><ImageIcon size={15}/> Escolher imagem</button>
+            {selected.mediaId&&(mediaUrls[selected.mediaId]?<div className="lg-studio-media-selected"><img src={mediaUrls[selected.mediaId]} alt="Imagem do Hero"/><button type="button" onClick={()=>changeMedia(undefined)}>Remover associação</button></div>:<p className="lg-studio-panel-subtitle">Imagem indisponível neste navegador.</p>)}
+          </div>}
+          <div className="lg-studio-design-fields"><strong>Design e espaçamento</strong>
+            <label>Cor de fundo <input type="color" value={selected.presentation?.backgroundColor||'#ffffff'} onChange={e=>changePresentation('backgroundColor',e.target.value)}/></label>
+            <button type="button" className="lg-studio-design-clear" onClick={()=>changePresentation('backgroundColor',undefined)}>Repor fundo original</button>
+            <label>Cor do texto <input type="color" value={selected.presentation?.color||'#26352a'} onChange={e=>changePresentation('color',e.target.value)}/></label>
+            <button type="button" className="lg-studio-design-clear" onClick={()=>changePresentation('color',undefined)}>Repor texto original</button>
+            <label>Alinhamento <select value={selected.presentation?.textAlign||'left'} onChange={e=>changePresentation('textAlign',e.target.value as 'left'|'center'|'right')}><option value="left">Esquerda</option><option value="center">Centro</option><option value="right">Direita</option></select></label>
+            <label>Espaço superior (px) <input type="number" min="0" max="320" value={selected.presentation?.paddingTopPx??46} onChange={e=>changePresentation('paddingTopPx',Math.min(320,Math.max(0,Number(e.target.value)||0)))}/></label>
+            <label>Espaço inferior (px) <input type="number" min="0" max="320" value={selected.presentation?.paddingBottomPx??46} onChange={e=>changePresentation('paddingBottomPx',Math.min(320,Math.max(0,Number(e.target.value)||0)))}/></label>
+          </div>
           <div className="lg-studio-inspector-actions">
             <button type="button" onClick={()=>move(-1)} disabled={blocks.findIndex(b=>b.id===selected.id)===0} title="Mover para cima"><ArrowUp size={16}/></button>
             <button type="button" onClick={()=>move(1)} disabled={blocks.findIndex(b=>b.id===selected.id)===blocks.length-1} title="Mover para baixo"><ArrowDown size={16}/></button>
@@ -273,6 +303,7 @@ export function WebsiteStudioPage() {
         </>}
       </aside>
     </div>
-    <div className="lg-studio-footer-note"><FileText size={15}/> Protótipo isolado: rascunhos locais e pré-exportação JSON de blocos. Sem autenticação, persistência de produção, importação automática ou publicação. Validar o JSON no contrato original antes de integrar.</div>
+    <div className="lg-studio-footer-note"><FileText size={15}/> Protótipo isolado: rascunhos locais, imagens em IndexedDB e pré-exportação JSON. Imagens locais não são mediaId de produção. Sem publicação.</div>
+    <LocalMediaLibrary open={mediaOpen} siteName={site.name} items={media.items} selectedId={selected?.mediaId} busy={media.busy} error={media.error} onUpload={media.upload} onRemove={media.remove} onSelect={changeMedia} onClose={()=>setMediaOpen(false)}/>
   </section>;
 }
