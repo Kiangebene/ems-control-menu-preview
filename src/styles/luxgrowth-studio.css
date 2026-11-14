@@ -191,3 +191,24 @@
 .lg-studio-image-controls select{width:100%;min-width:0;border:1px solid var(--border);border-radius:9px;padding:9px;background:var(--background);color:var(--foreground);font-size:11px}
 .lg-studio-image-controls .lg-studio-design-clear{margin:5px 0 0}
 .lg-studio-image-controls .lg-studio-panel-subtitle{margin:0 0 4px}
+
+/* V5 — Direct photo manipulation and a clearer colour palette; original panels unchanged. */
+.lg-studio-hero .lg-studio-direct-image{position:absolute;inset:0;z-index:0;overflow:hidden;touch-action:none;cursor:grab;user-select:none}
+.lg-studio-hero .lg-studio-direct-image.is-dragging{cursor:grabbing}
+.lg-studio-direct-image img{display:block;width:100%;height:100%;pointer-events:none;user-select:none;transform-origin:center;will-change:transform}
+.lg-studio-drag-hint{position:absolute;bottom:9px;right:9px;background:#17291ecb;color:white;border-radius:8px;font-size:10px;padding:7px 10px;opacity:0;pointer-events:none;transition:opacity .12s}
+.lg-studio-direct-image:hover .lg-studio-drag-hint,.lg-studio-direct-image.is-dragging .lg-studio-drag-hint{opacity:1}
+.lg-studio-hero:has(.lg-studio-direct-image) .lg-studio-hero-orb{pointer-events:none}
+.lg-studio-color-field{display:flex;flex-direction:column;gap:10px;padding:10px;border:1px solid var(--border);border-radius:11px;background:var(--background);min-width:0}
+.lg-studio-color-heading{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:11px}
+.lg-studio-color-heading span{font-size:9px;color:var(--muted-foreground)}
+.lg-studio-color-input-row{display:flex;align-items:center;gap:6px;min-width:0}
+.lg-studio-color-native{display:block!important;margin:0!important;position:relative;flex:0 0 34px;height:34px;border:1px solid var(--border);border-radius:8px;overflow:hidden;cursor:pointer}
+.lg-studio-color-native>span{position:absolute;inset:3px;border-radius:5px;pointer-events:none}
+.lg-studio-color-native input[type=color]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.lg-studio-inspector .lg-studio-color-hex{min-width:0;flex:1;height:34px;font-family:monospace;font-size:11px;text-transform:uppercase;border-radius:8px;border:1px solid var(--border);padding:7px}
+.lg-studio-color-reset{height:34px;width:34px;border:1px solid var(--border);border-radius:8px;display:grid;place-items:center;flex-shrink:0}
+.lg-studio-color-swatches{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.lg-studio-color-swatch{aspect-ratio:1;border:1px solid #79807859;border-radius:7px;min-height:20px}
+.lg-studio-color-swatch.is-active{outline:2px solid #88ba42;outline-offset:1px}
+@media(prefers-reduced-motion:reduce){.lg-studio-drag-hint{transition:none}}
