@@ -12,9 +12,10 @@ export type PrototypeSection = {
   title: string;
   body: string;
   buttonLabel: string;
+  buttonHref?:string;
   items: string[];
   mediaId?:string;
-  presentation?:{backgroundColor?:string;color?:string;textAlign?:'left'|'center'|'right';paddingTopPx?:number;paddingBottomPx?:number};
+  presentation?:{backgroundColor?:string;color?:string;textAlign?:'left'|'center'|'right';paddingTopPx?:number;paddingBottomPx?:number;fontFamily?:string;fontSizePx?:number;fontWeight?:number;lineHeight?:number};
 };
 
 export type StudioNativeDraft = {
@@ -40,18 +41,20 @@ function escapeHtml(text: string): string {
 }
 const clean = (text: string, max = 1200) => text.trim().slice(0,max);
 const content = (text: string, fallback: string) => clean(text) || fallback;
+const safeHref=(href:string)=>/^#[a-zA-Z0-9_-]{1,80}$/.test(href)||/^\/(?!\/)[a-zA-Z0-9/_#?=&.%-]{0,300}$/.test(href)||/^https:\/\/[a-zA-Z0-9.-]+(?::443)?(?:\/[a-zA-Z0-9/_#?=&.%-]*)?$/.test(href);
+const ctaHref=(section:PrototypeSection)=>safeHref(section.buttonHref??'#contacto')?(section.buttonHref??'#contacto'):undefined;
 
 /** Note: paragraph-only HTML; must still go through the production sanitizer. */
 export function toNativeDraft(section: PrototypeSection, order: number): NativeMapping {
   const common = { id: section.id, order, enabled: true as const, ...(section.presentation?{presentation:section.presentation}:{}) };
   if(section.kind === 'hero') {
     return {sectionId:section.id,sectionKind:section.kind,supported:true,
-      caveat:section.mediaId?'Imagem local não exportada: atribuir mediaId real após upload autorizado no SaaS.':undefined,
+      caveat:[section.mediaId?'Imagem local não exportada: atribuir mediaId real após upload autorizado no SaaS.':'',!ctaHref(section)?'Destino CTA inválido, substituído no rascunho por #contacto.':''].filter(Boolean).join(' ')||undefined,
       draft:{...common,type:'hero',data:{
         eyebrow:clean(section.kicker,120),
         title:content(section.title,'Sem título').slice(0,220),
         text:clean(section.body),
-        ...(section.buttonLabel.trim()?{primaryCta:{label:clean(section.buttonLabel,120),href:'#contacto'}}:{})
+        ...(section.buttonLabel.trim()?{primaryCta:{label:clean(section.buttonLabel,120),href:ctaHref(section)??'#contacto'}}:{})
       }}};
   }
   if(section.kind === 'features') {
@@ -66,7 +69,7 @@ export function toNativeDraft(section: PrototypeSection, order: number): NativeM
   }
   if(section.kind === 'cta') {
     return {sectionId:section.id,sectionKind:section.kind,supported:!!section.buttonLabel.trim(),
-      caveat:'O destino #contacto é ilustrativo; configurar o link real antes de publicar.',
+      caveat:ctaHref(section)?'Destino CTA deve ser verificado antes de publicar.':'Destino CTA inválido, substituído no rascunho por #contacto.',
       draft:{...common,type:'cta',data:{
         title:content(section.title,'Chamada à ação').slice(0,220),
         text:clean(section.body),
