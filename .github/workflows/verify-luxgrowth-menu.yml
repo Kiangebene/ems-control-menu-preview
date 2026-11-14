@@ -13,6 +13,7 @@ on:
       - feat/luxgrowth-studio-typography-actions-v1
       - feat/luxgrowth-studio-hero-image-controls-v1
       - feat/luxgrowth-studio-direct-photo-colors-v1
+      - feat/luxgrowth-studio-inline-content-v1
   workflow_dispatch:
 permissions:
   contents: read
