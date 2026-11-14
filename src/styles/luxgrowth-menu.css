@@ -120,3 +120,105 @@
   .lg-topnav .lg-topnav-tabs { flex: 1 1 auto; }
   .lg-topnav .lg-topnav-tabs-wrap { max-width: 100%; }
 }
+
+/* ===== LuxGrowth V3: selectable contextual TOP / nested SIDEBAR navigation ===== */
+/* This CSS only affects the navigation; legacy dashboards and charts remain untouched. */
+.lg-nav-mode {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  padding:4px;
+  margin:0 0 7px;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:13px;
+  background:rgba(255,255,255,.035);
+}
+.lg-nav-mode > button {
+  display:flex;
+  flex:1 1 0;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  min-width:0;
+  min-height:36px;
+  padding:7px 4px;
+  border-radius:9px;
+  color:#aab9ad;
+  font-size:11px;
+  font-weight:650;
+  cursor:pointer;
+}
+.lg-nav-mode > button.is-current {
+  background:#c9f36a;
+  color:#17220f;
+}
+.lg-nav-mode > button:focus-visible,.lg-vertical-link:focus-visible,.lg-vertical-nest-toggle:focus-visible {
+  outline:2px solid #c9f36a;
+  outline-offset:2px;
+}
+.lg-nav-mode > button:hover:not(.is-current) { background:#ffffff12;color:#f3ffed; }
+.lg-shell-expanded .lg-nav-mode { justify-content:stretch; }
+.lg-nav-mode .lg-when-expanded { white-space:nowrap; }
+/* The section's nested items are shown only in lateral mode. */
+.lg-sidebar--vertical .lg-nav--sections { padding-top:5px; }
+.lg-vertical-list {
+  margin:3px 3px 12px 20px;
+  padding:3px 0 3px 9px;
+  border-left:1px solid rgba(201,243,106,.25);
+  animation:lg-in .16s ease;
+}
+.lg-vertical-node { min-width:0; }
+.lg-vertical-line { display:flex;align-items:center;min-height:33px;min-width:0;border-radius:9px; }
+.lg-vertical-line:hover { background:rgba(255,255,255,.065); }
+.lg-vertical-line.is-selected { background:rgba(201,243,106,.16); }
+.lg-vertical-link {
+  flex:1 1 0;
+  display:flex;
+  align-items:center;
+  gap:5px;
+  min-width:0;
+  min-height:33px;
+  text-align:left;
+  border-radius:8px;
+  color:#b7c8b9;
+  font-size:11px;
+  cursor:pointer;
+}
+.lg-vertical-link.is-selected { color:#ddff9d;font-weight:750; }
+.lg-vertical-name {
+  flex:1;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.lg-vertical-link .lg-soon {font-size:8px;padding:2px 4px;flex-shrink:0;}
+.lg-vertical-nest-toggle {
+  flex-shrink:0;
+  display:grid;
+  place-items:center;
+  height:30px;
+  width:23px;
+  border-radius:6px;
+  color:#cadac4;
+  cursor:pointer;
+}
+.lg-vertical-nest-toggle:hover {color:#c9f36a;background:#ffffff11;}
+.lg-section-caret {margin-left:auto;flex-shrink:0;transition:transform .16s ease;}
+.lg-section-caret.lg-nest-closed,.lg-nest-closed {transform:rotate(-90deg);}
+.lg-vertical-children {border-left:1px solid #ffffff1c;margin-left:9px;padding-left:2px;}
+.lg-sidebar--vertical .lg-nav {overflow-x:hidden;overflow-y:auto;}
+.lg-sidebar--vertical .lg-section-container {max-width:100%;min-width:0;}
+.lg-sidebar--vertical .lg-section-container > .lg-groupbtn {margin-bottom:2px;}
+/* Keep desktop module content aligned when the sidebar is expanded. */
+.lg-main--vertical-nav .lg-current-page {padding-top:9px;}
+@media(max-width:820px) {
+ .lg-sidebar--vertical .lg-nav-mode {width:100%;}
+ .lg-sidebar--vertical .lg-vertical-list {margin-left:20px;}
+ .lg-sidebar--vertical .lg-section-container > .lg-groupbtn {width:100%;}
+ .lg-main--vertical-nav .lg-current-page {padding-top:0;}
+}
+@media(prefers-reduced-motion:reduce) {
+ .lg-section-caret,.lg-vertical-list {transition:none;animation:none;}
+}
