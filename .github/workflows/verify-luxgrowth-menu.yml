@@ -10,6 +10,7 @@ on:
       - feat/luxgrowth-studio-workspace-v1-1
       - feat/luxgrowth-studio-native-blocks-v1
       - feat/luxgrowth-studio-media-inspector-v1
+      - feat/luxgrowth-studio-typography-actions-v1
   workflow_dispatch:
 permissions:
   contents: read
