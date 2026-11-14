@@ -3,7 +3,7 @@ import {
   BarChart3, CalendarDays, ChevronLeft, ChevronRight, CircleHelp,
   FolderKanban, Globe2, Home, Menu, MessageSquareText, Moon,
   Plus, Search, Settings2, Sparkles, Sun, UsersRound, Wallet,
-  X, Layers3, PanelLeft, PanelTop, ChevronDown, type LucideIcon
+  X, Layers3, ChevronDown, type LucideIcon
 } from 'lucide-react';
 import { destinations, luxMenu, routeFor, type LuxItem } from './luxgrowth-menu-data';
 
@@ -22,19 +22,17 @@ interface Props {
   isDark: boolean;
   onThemeToggle: () => void;
   userName: string;
-  navigationMode: 'top' | 'sidebar';
-  onNavigationModeChange: (mode: 'top' | 'sidebar') => void;
 }
 
 /** Rail contains only product sections; module tabs belong to LuxGrowthTopNav. */
-export function LuxGrowthSidebar({ currentPage, onPageChange, isDark, onThemeToggle, userName, navigationMode, onNavigationModeChange }: Props) {
+export function LuxGrowthSidebar({ currentPage, onPageChange, isDark, onThemeToggle, userName }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const input = useRef<HTMLInputElement>(null);
-  useEffect(() => { if (navigationMode === 'sidebar') setExpanded(true); }, [navigationMode]);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
 
   const section = useMemo(() => {
     const destination = destinations.find(d => d.route === currentPage);
@@ -74,9 +72,7 @@ export function LuxGrowthSidebar({ currentPage, onPageChange, isDark, onThemeTog
     return () => window.removeEventListener('keydown', handler);
   }, [onPageChange]);
 
-  // In the vertical mode, each group owns its modules and their nested entries.
-  // All routes still use the same shared navigation configuration.
-  const activeSection = luxMenu.find(s => s.id === section);
+  // Optional disclosure of the same modules shown in the persistent top navigation.
   const renderModule = (node: LuxItem, sectionId: string, depth = 0) => {
     const route = routeFor(sectionId, node.label);
     const isCurrent = currentPage === route;
@@ -110,25 +106,20 @@ export function LuxGrowthSidebar({ currentPage, onPageChange, isDark, onThemeTog
     </div>;
   };
 
-  const setMode = (mode: 'top' | 'sidebar') => {
-    onNavigationModeChange(mode);
-    if (mode === 'sidebar') setExpanded(true);
-  };
-
   const filtered = destinations.filter(d =>
     (d.label + ' ' + d.section).toLocaleLowerCase('pt-PT').includes(query.toLocaleLowerCase('pt-PT').trim())
   ).slice(0, 35);
   const initials = userName.trim().split(/\s+/).slice(0, 2).map(n => n[0]?.toUpperCase()).join('') || 'LG';
 
   return <div className={'lg-shell' + (expanded ? ' lg-shell-expanded' : '')}>
-    <aside className={'lg-sidebar lg-sidebar--rail' + (navigationMode === 'sidebar' ? ' lg-sidebar--vertical' : '') + (mobileOpen ? ' lg-sidebar-mobile-open' : '')} aria-label="Navegação principal LuxGrowth">
+    <aside className={'lg-sidebar lg-sidebar--rail lg-sidebar--unified' + (mobileOpen ? ' lg-sidebar-mobile-open' : '')} aria-label="Navegação principal LuxGrowth">
       <div className="lg-sidebar-top">
         <button className="lg-brand" title="LuxGrowth — Visão geral" aria-label="LuxGrowth — Visão geral" onClick={() => navigate('dashboard')}>
           <img src={LOGO.trim()} alt="" />
         </button>
         <div className="lg-when-expanded lg-wordmark"><strong>LuxGrowth</strong><small>Growth OS</small></div>
         <button className="lg-collapse" type="button" aria-label={expanded ? 'Recolher menu' : 'Expandir menu'}
-          title={expanded ? 'Recolher menu' : 'Expandir menu'} onClick={() => { if (expanded && navigationMode === 'sidebar') setMode('top'); setExpanded(v => !v); }}>
+          title={expanded ? 'Recolher menu' : 'Expandir menu'} onClick={() => setExpanded(v => !v)}>
           {expanded ? <ChevronLeft size={17} /> : <ChevronRight size={17} />}
         </button>
       </div>
@@ -137,31 +128,28 @@ export function LuxGrowthSidebar({ currentPage, onPageChange, isDark, onThemeTog
           <Search size={19} /><span className="lg-when-expanded">Pesquisar módulos <kbd>/</kbd></span>
         </button>
       </div>
-      <div className="lg-nav-mode" role="group" aria-label="Escolher posição dos módulos">
-        <button type="button" className={navigationMode === 'top' ? 'is-current' : ''}
-          onClick={() => setMode('top')} title="Módulos no topo" aria-label="Navegação horizontal"
-          aria-pressed={navigationMode === 'top'}>
-          <PanelTop size={16}/><span className="lg-when-expanded">Topo</span>
-        </button>
-        <button type="button" className={navigationMode === 'sidebar' ? 'is-current' : ''}
-          onClick={() => setMode('sidebar')} title="Módulos no menu lateral" aria-label="Navegação lateral"
-          aria-pressed={navigationMode === 'sidebar'}>
-          <PanelLeft size={16}/><span className="lg-when-expanded">Lateral</span>
-        </button>
-      </div>
       <nav className="lg-nav lg-nav--sections" aria-label="Grupos de módulos">
         {luxMenu.map(s => {
           const Icon = ICONS[s.icon] ?? Layers3;
+          const isOpen = openSections[s.id] ?? false;
           return <div className="lg-section-container" key={s.id}>
-            <button type="button" className={'lg-groupbtn lg-rail-item' + (section === s.id ? ' is-current' : '')}
-              aria-label={s.label} title={s.label} aria-current={section === s.id ? 'page' : undefined}
-              onClick={() => selectSection(s.id)} aria-expanded={navigationMode === 'sidebar' && expanded && section === s.id}>
-              <Icon size={19} strokeWidth={section === s.id ? 2.2 : 1.8} />
-              <span className="lg-when-expanded lg-group-name">{s.label}</span>
-              {navigationMode === 'sidebar' && expanded && <ChevronDown className={'lg-section-caret' + (section === s.id ? '' : ' lg-nest-closed')} size={14}/>}
-              {section === s.id && <i className="lg-rail-indicator" aria-hidden="true" />}
-            </button>
-            {navigationMode === 'sidebar' && expanded && section === s.id && <div className="lg-vertical-list">
+            <div className="lg-section-row">
+              <button type="button" className={'lg-groupbtn lg-rail-item' + (section === s.id ? ' is-current' : '')}
+                aria-label={s.label} title={s.label} aria-current={section === s.id ? 'page' : undefined}
+                onClick={() => selectSection(s.id)}>
+                <Icon size={19} strokeWidth={section === s.id ? 2.2 : 1.8} />
+                <span className="lg-when-expanded lg-group-name">{s.label}</span>
+                {section === s.id && <i className="lg-rail-indicator" aria-hidden="true" />}
+              </button>
+              {expanded && <button type="button" className="lg-section-disclosure"
+                title={(isOpen ? 'Ocultar' : 'Mostrar') + ' módulos de ' + s.label}
+                aria-label={(isOpen ? 'Ocultar' : 'Mostrar') + ' módulos de ' + s.label}
+                aria-expanded={isOpen}
+                onClick={() => setOpenSections(previous => ({ ...previous, [s.id]: !isOpen }))}>
+                <ChevronDown size={15} className={isOpen ? '' : 'lg-nest-closed'}/>
+              </button>}
+            </div>
+            {expanded && isOpen && <div className="lg-vertical-list">
               {s.items.map(node => renderModule(node, s.id))}
             </div>}
           </div>;
