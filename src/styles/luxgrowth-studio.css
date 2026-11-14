@@ -212,3 +212,17 @@
 .lg-studio-color-swatch{aspect-ratio:1;border:1px solid #79807859;border-radius:7px;min-height:20px}
 .lg-studio-color-swatch.is-active{outline:2px solid #88ba42;outline-offset:1px}
 @media(prefers-reduced-motion:reduce){.lg-studio-drag-hint{transition:none}}
+
+/* V6: inline content editing without changing Studio's three-panel structure. */
+.lg-studio-inline-text:not(.is-editing){cursor:text}
+.lg-studio-inline-text:not(.is-editing):hover{outline:1px dashed #8ab64d;outline-offset:4px;border-radius:3px}
+.lg-studio-inline-text.is-editing{display:block;min-width:min(100%,180px);width:100%;max-width:440px}
+.lg-studio-inline-text input,.lg-studio-inline-text textarea{
+  display:block;width:100%;min-width:0;font:inherit;line-height:inherit;font-weight:inherit;
+  color:inherit;background:#ffffffec;border:2px solid #a1c965;border-radius:7px;
+  padding:6px 9px;resize:vertical;outline:none;box-shadow:0 4px 14px #192c1e15;
+}
+.lg-studio-inline-text.lg-studio-cta-button input{
+  width:100%;border:1px solid #a1c965;padding:2px 5px;font-size:inherit;
+}
+.lg-studio-inline-placeholder{opacity:.65;font-style:italic}
