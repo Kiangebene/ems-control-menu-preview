@@ -13,6 +13,8 @@ export type PrototypeSection = {
   body: string;
   buttonLabel: string;
   items: string[];
+  mediaId?:string;
+  presentation?:{backgroundColor?:string;color?:string;textAlign?:'left'|'center'|'right';paddingTopPx?:number;paddingBottomPx?:number};
 };
 
 export type StudioNativeDraft = {
@@ -21,6 +23,7 @@ export type StudioNativeDraft = {
   order: number;
   enabled: true;
   data: Record<string, unknown>;
+  presentation?:PrototypeSection['presentation'];
 };
 type NativeMapping = {
   sectionId: string;
@@ -40,9 +43,10 @@ const content = (text: string, fallback: string) => clean(text) || fallback;
 
 /** Note: paragraph-only HTML; must still go through the production sanitizer. */
 export function toNativeDraft(section: PrototypeSection, order: number): NativeMapping {
-  const common = { id: section.id, order, enabled: true as const };
+  const common = { id: section.id, order, enabled: true as const, ...(section.presentation?{presentation:section.presentation}:{}) };
   if(section.kind === 'hero') {
     return {sectionId:section.id,sectionKind:section.kind,supported:true,
+      caveat:section.mediaId?'Imagem local não exportada: atribuir mediaId real após upload autorizado no SaaS.':undefined,
       draft:{...common,type:'hero',data:{
         eyebrow:clean(section.kicker,120),
         title:content(section.title,'Sem título').slice(0,220),
