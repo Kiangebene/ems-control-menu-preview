@@ -257,3 +257,18 @@
 .lg-studio-viewport--mobile .lg-studio-layout-cells{grid-template-columns:1fr}
 .lg-studio-render[style*="background-color"] .lg-studio-layout-section{background:transparent}
 .lg-studio-render[style*="color"] .lg-studio-layout-section h2,.lg-studio-render[style*="color"] .lg-studio-layout-section p,.lg-studio-render[style*="color"] .lg-studio-layout-section small{color:inherit}
+
+/* V12: child slots and layers remain inside the approved three-panel editor. */
+.lg-studio-drop-slot{min-height:52px;border:1px dashed #94b776;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:8px;margin-top:10px;background:rgba(221,241,194,.12)}
+.lg-studio-drop-slot:empty{min-height:52px}
+.lg-studio-drop-slot:has(.lg-studio-render)>.lg-studio-drop-hint{display:none}
+.lg-studio-drop-hint{color:#6a8365;font-size:10px;line-height:1.4;text-align:center;pointer-events:none;padding:7px 1px}
+.lg-studio-drop-slot:has(.lg-studio-render){border-style:solid}
+.lg-studio-drop-slot>.lg-studio-render{width:100%;border-radius:8px;min-width:0;overflow:hidden}
+.lg-studio-drop-slot .lg-studio-hero,.lg-studio-drop-slot .lg-studio-text-section,.lg-studio-drop-slot .lg-studio-features-section,.lg-studio-drop-slot .lg-studio-cta-section{padding:18px!important}
+.lg-studio-drop-slot .lg-studio-render h2{font-size:20px;max-width:100%}
+.lg-studio-layout-cell .lg-studio-drop-slot{flex:1}
+.lg-studio-layer-group{display:flex;flex-direction:column;gap:5px}
+.lg-studio-layer-child{margin-left:12px;width:calc(100% - 12px);border-left:3px solid #9ecf6a}
+.lg-studio-detach{margin:8px 0 14px;width:100%}
+.lg-studio-viewport--mobile .lg-studio-layout-cell{min-width:0}

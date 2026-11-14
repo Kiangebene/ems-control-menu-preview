@@ -15,7 +15,7 @@ type SectionKind = 'hero' | 'text' | 'features' | 'cta' | 'image' | 'divider' | 
 type HeroImageSettings = {opacityPct?:number;positionX?:number;positionY?:number;fit?:'cover'|'contain';zoomPct?:number;offsetX?:number;offsetY?:number};
 type Section = {
   id: string; kind: SectionKind; kicker: string; title: string; body: string;
-  buttonLabel: string; buttonHref?:string; items: string[]; layoutColumns?:number; layoutGapPx?:number; layoutWidthPx?:number; mediaId?:string; heroImage?:HeroImageSettings; presentation?:{backgroundColor?:string;color?:string;textAlign?:'left'|'center'|'right';paddingTopPx?:number;paddingBottomPx?:number;fontFamily?:string;fontSizePx?:number;fontWeight?:number;lineHeight?:number};
+  buttonLabel: string; buttonHref?:string; items: string[]; layoutColumns?:number; layoutGapPx?:number; layoutWidthPx?:number; parentId?:string; parentSlot?:number; mediaId?:string; heroImage?:HeroImageSettings; presentation?:{backgroundColor?:string;color?:string;textAlign?:'left'|'center'|'right';paddingTopPx?:number;paddingBottomPx?:number;fontFamily?:string;fontSizePx?:number;fontWeight?:number;lineHeight?:number};
 };
 type Device = 'desktop' | 'mobile';
 const SITE_KEY = 'luxgrowth-websites-prototype-v1';
@@ -86,15 +86,30 @@ function safeLink(value:string):boolean {
   const href=value.trim();
   return /^#[a-zA-Z0-9_-]{1,80}$/.test(href) || /^\/(?!\/)[a-zA-Z0-9/_#?=&.%-]{0,300}$/.test(href) || /^https:\/\/[a-zA-Z0-9.-]+(?::443)?(?:\/[a-zA-Z0-9/_#?=&.%-]*)?$/.test(href);
 }
+const isLayout=(kind:SectionKind)=>kind==='container'||kind==='columns'||kind==='grid';
+function normalizedBlocks(input:Section[]):Section[]{
+  const ids=new Set(input.map(b=>b.id));
+  return input.map(b=>b.parentId&&(!ids.has(b.parentId)||b.parentId===b.id)?{...b,parentId:undefined,parentSlot:undefined}:b);
+}
 function sectionLabel(kind: SectionKind) { return TYPES.find(t=>t.kind===kind)?.label || kind; }
-function EditorPreview({ sections, selectedId, onSelect, site, device, mediaUrls, onImageChange, onContentChange }: {
-  sections: Section[];selectedId:string|null;onSelect:(id:string)=>void;site:Site;device:Device;mediaUrls:Record<string,string>;onImageChange:(id:string,next:HeroImageSettings)=>void;onContentChange:(id:string,key:'kicker'|'title'|'body'|'buttonLabel',value:string)=>void
-}) {
-  return <div className={'lg-studio-viewport lg-studio-viewport--'+device} style={{'--studio-accent':site.accent || '#c9f36a'} as CSSProperties}>
-    <div className="lg-studio-preview-browser">
-      <div className="lg-studio-browser-top"><span/><span/><span/><small>{site.domain || 'website.example'}</small></div>
-      <div className="lg-studio-preview-navigation"><strong>{site.name}</strong><span>Início　 Serviços　 Contactos</span></div>
-      {sections.map((section,index)=><section className={'lg-studio-render lg-studio-render--'+section.kind+(section.id===selectedId?' is-selected':'')} key={section.id} style={{backgroundColor:section.presentation?.backgroundColor||undefined,color:section.presentation?.color||undefined,textAlign:section.presentation?.textAlign||undefined,'--lg-pad-top':section.presentation?.paddingTopPx===undefined?undefined:section.presentation.paddingTopPx+'px','--lg-pad-bottom':section.presentation?.paddingBottomPx===undefined?undefined:section.presentation.paddingBottomPx+'px',
+
+function SectionPreview({section,index,children,selectedId,onSelect,mediaUrls,onImageChange,onContentChange,onDropInto}:{
+  section:Section;index:number;children:Section[];selectedId:string|null;onSelect:(id:string)=>void;mediaUrls:Record<string,string>;
+  onImageChange:(id:string,next:HeroImageSettings)=>void;
+  onContentChange:(id:string,key:'kicker'|'title'|'body'|'buttonLabel',value:string)=>void;
+  onDropInto:(id:string,slot:number,sourceId:string)=>void;
+}){
+  const [dragSource,setDragSource]=useState<string|null>(null);
+  const childProps={selectedId,onSelect,mediaUrls,onImageChange,onContentChange,onDropInto};
+  const childAt=(slot:number)=>children.filter(c=>(c.parentSlot??0)===slot);
+  const slot=(slotNumber:number)=> <div className="lg-studio-drop-slot"
+      onDragOver={event=>{if(event.dataTransfer.types.includes('text/plain'))event.preventDefault()}}
+      onDrop={event=>{event.preventDefault();event.stopPropagation();const id=event.dataTransfer.getData('text/plain');if(id)onDropInto(section.id,slotNumber,id)}}
+      aria-label={'Zona '+(slotNumber+1)+' do '+sectionLabel(section.kind)}>
+      {childAt(slotNumber).map((child,i)=><SectionPreview key={child.id} section={child} index={i} children={[]} {...childProps}/>)}
+      <span className="lg-studio-drop-hint">Arrasta uma camada para aqui</span>
+    </div>;
+  return <section className={'lg-studio-render lg-studio-render--'+section.kind+((section.id===selectedId||children.some(child=>child.id===selectedId))?' is-selected':'')} key={section.id} style={{backgroundColor:section.presentation?.backgroundColor||undefined,color:section.presentation?.color||undefined,textAlign:section.presentation?.textAlign||undefined,'--lg-pad-top':section.presentation?.paddingTopPx===undefined?undefined:section.presentation.paddingTopPx+'px','--lg-pad-bottom':section.presentation?.paddingBottomPx===undefined?undefined:section.presentation.paddingBottomPx+'px',
   '--lg-title-font':section.presentation?.fontFamily||undefined,
   '--lg-title-size':section.presentation?.fontSizePx===undefined?undefined:section.presentation.fontSizePx+'px',
   '--lg-title-weight':section.presentation?.fontWeight||undefined,
@@ -112,12 +127,13 @@ function EditorPreview({ sections, selectedId, onSelect, site, device, mediaUrls
           <StudioInlineText as="small" label="Etiqueta" value={section.kicker} maxLength={90} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'kicker',value)}/>
           <StudioInlineText as="h2" label="Título" value={section.title} maxLength={180} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'title',value)}/>
           <StudioInlineText as="p" label="Texto" value={section.body} multiline maxLength={1000} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'body',value)}/>
+          {slot(0)}
         </div></div>}
         {(section.kind==='columns'||section.kind==='grid')&&<div className={'lg-studio-layout-section lg-studio-'+section.kind+'-section'}>
           <StudioInlineText as="small" label="Etiqueta" value={section.kicker} maxLength={90} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'kicker',value)}/>
           <StudioInlineText as="h2" label="Título" value={section.title} maxLength={180} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'title',value)}/>
           <div className="lg-studio-layout-cells" style={{'--lg-layout-columns':section.layoutColumns??(section.kind==='grid'?3:2),'--lg-layout-gap':(section.layoutGapPx??16)+'px'} as CSSProperties}>
-            {section.items.map((item,i)=><div className="lg-studio-layout-cell" key={i}><span className="lg-studio-layout-cell-number">{String(i+1).padStart(2,'0')}</span><strong>{item||'Novo item'}</strong></div>)}
+            {Array.from({length:section.layoutColumns??(section.kind==='grid'?3:2)},(_,i)=><div className="lg-studio-layout-cell" key={i}><span className="lg-studio-layout-cell-number">{String(i+1).padStart(2,'0')}</span><strong>{section.items[i]||'Novo item'}</strong>{slot(i)}</div>)}
           </div>
         </div>}
         {section.kind==='hero' && <div className="lg-studio-hero">
@@ -144,7 +160,19 @@ function EditorPreview({ sections, selectedId, onSelect, site, device, mediaUrls
           <StudioInlineText as="h2" label="Título" value={section.title} maxLength={180} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'title',value)}/>
           <StudioInlineText as="p" label="Descrição" value={section.body} multiline maxLength={1000} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'body',value)}/><StudioInlineText as="span" className="lg-studio-cta-button" label="Botão" value={section.buttonLabel||'Contactar'} maxLength={65} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'buttonLabel',value)}/>
         </div>}
-      </section>)}
+      </section>;
+}
+function EditorPreview({ sections, selectedId, onSelect, site, device, mediaUrls, onImageChange, onContentChange, onDropInto }: {
+  sections: Section[];selectedId:string|null;onSelect:(id:string)=>void;site:Site;device:Device;mediaUrls:Record<string,string>;onImageChange:(id:string,next:HeroImageSettings)=>void;onContentChange:(id:string,key:'kicker'|'title'|'body'|'buttonLabel',value:string)=>void;onDropInto:(id:string,slot:number,sourceId:string)=>void
+}) {
+  return <div className={'lg-studio-viewport lg-studio-viewport--'+device} style={{'--studio-accent':site.accent || '#c9f36a'} as CSSProperties}>
+    <div className="lg-studio-preview-browser">
+      <div className="lg-studio-browser-top"><span/><span/><span/><small>{site.domain || 'website.example'}</small></div>
+      <div className="lg-studio-preview-navigation"><strong>{site.name}</strong><span>Início　 Serviços　 Contactos</span></div>
+      {sections.filter(section=>!section.parentId).map((section,index)=><SectionPreview key={section.id} section={section} index={index}
+        children={sections.filter(child=>child.parentId===section.id)}
+        selectedId={selectedId} onSelect={onSelect} mediaUrls={mediaUrls} onImageChange={onImageChange}
+        onContentChange={onContentChange} onDropInto={onDropInto}/>)}
       {!sections.length && <div className="lg-studio-empty-canvas">Adiciona a primeira secção no painel lateral.</div>}
       <div className="lg-studio-site-footer">© {site.name} · Demonstração local</div>
     </div>
@@ -179,10 +207,11 @@ export function WebsiteStudioPage() {
   const mediaUrls=useMemo(()=>Object.fromEntries(media.items.map(item=>[item.id,item.url])),[media.items]);
   useEffect(()=>{
     const cached=existingDrafts()[draftKey];
-    const next=Array.isArray(cached)&&cached.every(b=>b && typeof b.kind==='string') ? copySections(cached) : initialSections(page);
+    const next=Array.isArray(cached)&&cached.every(b=>b && typeof b.kind==='string') ? normalizedBlocks(copySections(cached)) : initialSections(page);
     setBlocks(next);setSelectedId(next[0]?.id||null);setUndo([]);setRedo([]);setDirty(false);setMessage('');
   },[draftKey]);
   const selected=blocks.find(b=>b.id===selectedId);
+  const selectedParent=blocks.find(b=>b.id===selected?.parentId);
   const commit=(next: Section[],targetId=selectedId)=>{
     setUndo(prev=>[...prev.slice(-29),copySections(blocks)]);
     setRedo([]);setBlocks(next);setSelectedId(targetId);setDirty(true);setMessage('');
@@ -232,27 +261,44 @@ export function WebsiteStudioPage() {
   };
   const removeLayoutItem=(index:number)=>{
     if(!selected||!['columns','grid'].includes(selected.kind)||selected.items.length<=1)return;
-    commit(blocks.map(b=>b.id===selected.id?{...b,items:b.items.filter((_,i)=>i!==index)}:b),selected.id);
+    if(blocks.some(b=>b.parentId===selected.id&&b.parentSlot===index)){setMessage('Move os componentes desta posição para outra coluna antes de a remover.');return;}
+    commit(blocks.map(b=>b.id===selected.id?{...b,items:b.items.filter((_,i)=>i!==index)}:b.parentId===selected.id&&typeof b.parentSlot==='number'&&b.parentSlot>index?{...b,parentSlot:b.parentSlot-1}:b),selected.id);
+  };
+  const attach=(sourceId:string,targetId:string,slot:number)=>{
+    const source=blocks.find(b=>b.id===sourceId),parent=blocks.find(b=>b.id===targetId);
+    if(!source||!parent||!isLayout(parent.kind)||sourceId===targetId||isLayout(source.kind)||source.parentId===targetId&&source.parentSlot===slot)return;
+    if(source.parentId)return; // Move children to root before attaching elsewhere.
+    const limit=parent.kind==='container'?0:(parent.layoutColumns??(parent.kind==='grid'?3:2))-1;
+    commit(blocks.map(b=>b.id===sourceId?{...b,parentId:targetId,parentSlot:Math.max(0,Math.min(limit,slot))}:b),sourceId);
+  };
+  const detach=(childId:string)=>{
+    const child=blocks.find(b=>b.id===childId);if(!child?.parentId)return;
+    commit(blocks.map(b=>b.id===childId?{...b,parentId:undefined,parentSlot:undefined}:b),childId);
   };
   const add=(kind:SectionKind)=>{
     const block=makeSection(kind);
-    commit([...blocks,block],block.id);
+    const parent=selected && isLayout(selected.kind)?selected:blocks.find(b=>b.id===selected?.parentId);
+    const child=!isLayout(kind)&&parent?{...block,parentId:parent.id,parentSlot:0}:block;
+    commit([...blocks,child],child.id);
   };
   const duplicate=()=>{
     if(!selected)return;
     const at=blocks.findIndex(s=>s.id===selected.id);
     const clone={...selected,id:blockId(),items:[...selected.items],presentation:selected.presentation?{...selected.presentation}:undefined,heroImage:selected.heroImage?{...selected.heroImage}:undefined};
+    if(isLayout(selected.kind)) { // A new empty layout avoids duplicating hidden child references.
+      clone.parentId=undefined;clone.parentSlot=undefined;
+    }
     const next=[...blocks];next.splice(at+1,0,clone);commit(next,clone.id);
   };
   const remove=()=>{
     if(!selected)return;
-    const next=blocks.filter(s=>s.id!==selected.id);
+    const next=blocks.filter(s=>s.id!==selected.id&&s.parentId!==selected.id);
     commit(next,next[0]?.id||null);
   };
   const move=(direction:-1|1)=>{
     if(!selected)return;
     const at=blocks.findIndex(s=>s.id===selected.id),to=at+direction;
-    if(to<0||to>=blocks.length)return;
+    if(to<0||to>=blocks.length||blocks[to].parentId!==selected.parentId||blocks[to].parentSlot!==selected.parentSlot)return;
     const next=[...blocks];[next[at],next[to]]=[next[to],next[at]];commit(next,selected.id);
   };
   const dropLayer=(targetId:string)=>{
@@ -260,6 +306,8 @@ export function WebsiteStudioPage() {
     const from=blocks.findIndex(b=>b.id===draggedId);
     const target=blocks.findIndex(b=>b.id===targetId);
     if(from<0 || target<0){setDraggedId(null);return;}
+    const source=blocks[from],dest=blocks[target];
+    if(source.parentId!==dest.parentId||source.parentSlot!==dest.parentSlot){setDraggedId(null);return;}
     const next=[...blocks];
     const [moved]=next.splice(from,1);
     next.splice(target,0,moved);
@@ -360,7 +408,7 @@ export function WebsiteStudioPage() {
             <div className="lg-studio-layer-tree">
               <div className="lg-studio-layer-tree-root"><LayoutTemplate size={14}/> {page?.title || 'Página inicial'} <span>{blocks.length}</span></div>
               <div className="lg-studio-layer-list">
-          {blocks.map((block,i)=><button type="button" key={block.id} draggable
+          {blocks.filter(block=>!block.parentId).map((block,i)=><div key={block.id} className="lg-studio-layer-group"><button type="button" draggable
             onDragStart={event=>{setDraggedId(block.id);event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',block.id)}}
             onDragOver={event=>{event.preventDefault();event.dataTransfer.dropEffect='move'}}
             onDrop={event=>{event.preventDefault();dropLayer(block.id)}}
@@ -368,10 +416,17 @@ export function WebsiteStudioPage() {
             className={'lg-studio-layer'+(selectedId===block.id?' is-selected':'')+(draggedId===block.id?' is-dragging':'')}
             title="Arrastar para reorganizar" onClick={()=>setSelectedId(block.id)}>
             <GripVertical size={15}/><span><strong>{sectionLabel(block.kind)}</strong><small>{block.title||'Sem título'}</small></span><em>{i+1}</em>
-          </button>)}
+          </button>{blocks.filter(child=>child.parentId===block.id).map((child,j)=><button type="button" key={child.id} draggable
+            onDragStart={event=>{setDraggedId(child.id);event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',child.id)}}
+            onDragOver={event=>{event.preventDefault();event.dataTransfer.dropEffect='move'}}
+            onDrop={event=>{event.preventDefault();dropLayer(child.id)}}
+            onDragEnd={()=>setDraggedId(null)}
+            className={'lg-studio-layer lg-studio-layer-child'+(selectedId===child.id?' is-selected':'')}
+            onClick={()=>setSelectedId(child.id)}><GripVertical size={14}/><span><strong>{sectionLabel(child.kind)}</strong><small>{child.title||'Sem título'} · posição {(child.parentSlot??0)+1}</small></span><em>{j+1}</em>
+          </button>)}</div>)}
         </div>
             </div>
-            <p className="lg-studio-tab-hint">Seleciona uma camada para editar. Arrasta as secções para mudar a ordem.</p>
+            <p className="lg-studio-tab-hint">Seleciona uma camada para editar. Arrasta uma secção simples para uma zona do contentor no canvas. Dentro das camadas, reorganiza secções do mesmo nível.</p>
           </>}
           {sidebarTab==='pages'&&<>
             <div className="lg-studio-panel-heading"><FileText size={17}/><strong>Páginas</strong></div>
@@ -389,7 +444,7 @@ export function WebsiteStudioPage() {
             <div className="lg-studio-panel-heading"><LayoutTemplate size={17}/><strong>Estrutura da página</strong></div>
             <p className="lg-studio-panel-subtitle">{blocks.length} secções · {page?.title || 'Página inicial'}</p>
             <div className="lg-studio-layer-list">
-          {blocks.map((block,i)=><button type="button" key={block.id} draggable
+          {blocks.filter(block=>!block.parentId).map((block,i)=><div key={block.id} className="lg-studio-layer-group"><button type="button" draggable
             onDragStart={event=>{setDraggedId(block.id);event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',block.id)}}
             onDragOver={event=>{event.preventDefault();event.dataTransfer.dropEffect='move'}}
             onDrop={event=>{event.preventDefault();dropLayer(block.id)}}
@@ -397,7 +452,14 @@ export function WebsiteStudioPage() {
             className={'lg-studio-layer'+(selectedId===block.id?' is-selected':'')+(draggedId===block.id?' is-dragging':'')}
             title="Arrastar para reorganizar" onClick={()=>setSelectedId(block.id)}>
             <GripVertical size={15}/><span><strong>{sectionLabel(block.kind)}</strong><small>{block.title||'Sem título'}</small></span><em>{i+1}</em>
-          </button>)}
+          </button>{blocks.filter(child=>child.parentId===block.id).map((child,j)=><button type="button" key={child.id} draggable
+            onDragStart={event=>{setDraggedId(child.id);event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',child.id)}}
+            onDragOver={event=>{event.preventDefault();event.dataTransfer.dropEffect='move'}}
+            onDrop={event=>{event.preventDefault();dropLayer(child.id)}}
+            onDragEnd={()=>setDraggedId(null)}
+            className={'lg-studio-layer lg-studio-layer-child'+(selectedId===child.id?' is-selected':'')}
+            onClick={()=>setSelectedId(child.id)}><GripVertical size={14}/><span><strong>{sectionLabel(child.kind)}</strong><small>{child.title||'Sem título'} · posição {(child.parentSlot??0)+1}</small></span><em>{j+1}</em>
+          </button>)}</div>)}
         </div>
             <button type="button" className="lg-studio-reset" onClick={reset}><RotateCcw size={15}/> Repor estrutura</button>
           </>}
@@ -405,12 +467,16 @@ export function WebsiteStudioPage() {
       </aside>
       <div className="lg-studio-canvas-area" aria-label="Pré-visualização da página">
         <div className="lg-studio-canvas-header"><span><Globe2 size={15}/> {site.domain}</span><span>{device==='desktop'?'Desktop':'Mobile'} · {dirty?'Alterações não guardadas':'Rascunho local'}</span></div>
-        <EditorPreview sections={blocks} selectedId={selectedId} onSelect={setSelectedId} site={site} device={device} mediaUrls={mediaUrls} onImageChange={commitCanvasImage} onContentChange={commitInlineContent}/>
+        <EditorPreview sections={blocks} selectedId={selectedId} onSelect={setSelectedId} site={site} device={device} mediaUrls={mediaUrls} onImageChange={commitCanvasImage} onContentChange={commitInlineContent} onDropInto={attach}/>
       </div>
       <aside className="lg-studio-panel lg-studio-inspector" aria-label="Propriedades da secção selecionada">
         <div className="lg-studio-panel-heading"><Type size={17}/><strong>Propriedades</strong></div>
         {!selected?<p className="lg-studio-panel-subtitle">Seleciona uma secção para editar o conteúdo.</p>:<>
-          <p className="lg-studio-panel-subtitle">{sectionLabel(selected.kind)} · Secção selecionada</p>
+          <p className="lg-studio-panel-subtitle">{sectionLabel(selected.kind)} · {selectedParent?'Dentro de '+sectionLabel(selectedParent.kind):'Secção selecionada'}</p>
+          {selectedParent&&<button type="button" className="lg-studio-button lg-studio-detach" onClick={()=>detach(selected.id)}>Retirar do contentor</button>}
+          {isLayout(selected.kind)&&<div className="lg-studio-feature-fields"><strong>Componentes dentro do layout</strong>
+            <p className="lg-studio-panel-subtitle">Na aba Camadas ou Secções, arrasta um bloco simples para a área pontilhada deste layout. Seleciona o layout e usa Adicionar para criar um bloco dentro da primeira posição.</p>
+          </div>}
           {selected.kind!=='divider'&&selected.kind!=='image'&&selected.kind!=='heading'&&selected.kind!=='button'&&<label>Etiqueta <input value={selected.kicker} maxLength={90} onChange={e=>change('kicker',e.target.value)}/></label>}
           {selected.kind!=='divider'&&selected.kind!=='button'&&<label>{selected.kind==='image'?'Legenda':'Título'} <textarea rows={2} value={selected.title} maxLength={180} onChange={e=>change('title',e.target.value)}/></label>}
           {selected.kind!=='divider'&&selected.kind!=='heading'&&selected.kind!=='button'&&<label>{selected.kind==='image'?'Texto alternativo (acessibilidade)':'Descrição / texto'} <textarea rows={selected.kind==='image'?2:5} value={selected.body} maxLength={1000} onChange={e=>change('body',e.target.value)}/></label>}
@@ -492,7 +558,7 @@ export function WebsiteStudioPage() {
         </>}
       </aside>
     </div>
-    <div className="lg-studio-footer-note"><FileText size={15}/> Protótipo isolado: 11 componentes editáveis e rascunhos locais. Layouts são secções independentes (não contentores aninhados) e não são publicáveis. Sem publicação.</div>
+    <div className="lg-studio-footer-note"><FileText size={15}/> Protótipo isolado: 11 tipos editáveis, layouts com componentes filhos de um nível e rascunhos locais. Estrutura aninhada não exportável nem publicável. Sem publicação.</div>
     <LocalMediaLibrary open={mediaOpen} siteName={site.name} items={media.items} selectedId={selected?.mediaId} busy={media.busy} error={media.error} onUpload={media.upload} onRemove={media.remove} onSelect={changeMedia} onClose={()=>setMediaOpen(false)}/>
   </section>;
 }

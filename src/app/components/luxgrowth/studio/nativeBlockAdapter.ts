@@ -8,7 +8,7 @@
 export type PrototypeSection = {
   id: string;
   kind: 'hero' | 'text' | 'features' | 'cta' | 'image' | 'divider' | 'heading' | 'button' | 'container' | 'columns' | 'grid';
-  layoutColumns?:number; layoutGapPx?:number; layoutWidthPx?:number;
+  layoutColumns?:number; layoutGapPx?:number; layoutWidthPx?:number; parentId?:string; parentSlot?:number;
   kicker: string;
   title: string;
   body: string;
@@ -97,7 +97,9 @@ export function previewNativeBlocks(sections: PrototypeSection[]) {
     source:'ems-control-menu-preview',
     productionReady:false,
     notice:'Pré-exportação local. Requer validação com websiteBlockSchema, associação a tenant/page/locale e revisão manual antes de qualquer importação.',
-    containsUnsupportedBlocks:sections.some(section=>['image','divider','heading','button','container','columns','grid'].includes(section.kind)),
-    blocks:sections.map((section,index)=>toNativeDraft(section,index))
+    containsUnsupportedBlocks:sections.some(section=>!!section.parentId||['image','divider','heading','button','container','columns','grid'].includes(section.kind)),
+    blocks:sections.filter(section=>!section.parentId).map((section,index)=>toNativeDraft(section,index)),
+    nestedBlocks:sections.filter(section=>!!section.parentId).map(section=>({id:section.id,parentId:section.parentId,parentSlot:section.parentSlot,kind:section.kind,productionReady:false})),
+    warning:'Os componentes aninhados não fazem parte do contrato nativo e estão excluídos dos blocos exportáveis.'
   };
 }

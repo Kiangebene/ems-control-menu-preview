@@ -19,6 +19,7 @@ on:
       - feat/luxgrowth-studio-basic-blocks-v1
       - feat/luxgrowth-studio-heading-button-v1
       - feat/luxgrowth-studio-layout-blocks-v1
+      - feat/luxgrowth-studio-nested-layout-v12
   workflow_dispatch:
 permissions:
   contents: read
