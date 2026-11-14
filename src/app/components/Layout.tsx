@@ -3,6 +3,7 @@ import { LuxGrowthSidebar } from './LuxGrowthSidebar';
 import { LuxGrowthTopNav } from './LuxGrowthTopNav';
 import { destinationFor } from './luxgrowth-menu-data';
 import { LuxGrowthModulePreview } from './LuxGrowthModulePreview';
+import { ClientsPage } from './luxgrowth/clients/ClientsPage';
 import { Dashboard } from './Dashboard';
 import { Analytics } from './Analytics';
 import { Configuration } from './Configuration';
@@ -31,7 +32,8 @@ export function Layout(){
    {currentPage==='configuration'&&<Configuration/>}
    {currentPage==='reports'&&<Reports/>}
    {currentPage==='settings'&&<Settings userName={userName} onSaveUserName={setUserName} isDark={isDark} onThemeToggle={()=>setIsDark(v=>!v)}/>}
-   {currentPage.startsWith('lg/')&&<LuxGrowthModulePreview page={currentPage} onGoBack={()=>navigate('dashboard')}/>}
+   {currentPage==='lg/crm-vendas/clientes'&&<ClientsPage/>}
+   {currentPage.startsWith('lg/')&&currentPage!=='lg/crm-vendas/clientes'&&<LuxGrowthModulePreview page={currentPage} onGoBack={()=>navigate('dashboard')}/>}
    </div>
   </main>
  </div>
