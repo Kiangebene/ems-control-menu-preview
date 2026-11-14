@@ -5,6 +5,7 @@ on:
       - feat/luxgrowth-horizontal-menu-v2
       - feat/luxgrowth-crm-foundation-v1
       - feat/luxgrowth-websites-foundation-v1
+      - feat/luxgrowth-cms-prototype-v1
   workflow_dispatch:
 permissions:
   contents: read
