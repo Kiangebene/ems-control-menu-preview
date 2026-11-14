@@ -4,6 +4,7 @@ import { previewNativeBlocks } from './nativeBlockAdapter';
 import { LocalMediaLibrary, usePreviewMedia } from './LocalMediaLibrary';
 import { HeroImageLayer } from './HeroImageLayer';
 import { StudioColorField } from './StudioColorField';
+import { StudioInlineText } from './StudioInlineText';
 
 type Site = { id: string; name: string; domain: string; accent?: string; description?: string };
 type CmsContent = { id: string; websiteId: string; title: string; body: string; excerpt: string; type?: string; slug?: string };
@@ -69,8 +70,8 @@ function safeLink(value:string):boolean {
   return /^#[a-zA-Z0-9_-]{1,80}$/.test(href) || /^\/(?!\/)[a-zA-Z0-9/_#?=&.%-]{0,300}$/.test(href) || /^https:\/\/[a-zA-Z0-9.-]+(?::443)?(?:\/[a-zA-Z0-9/_#?=&.%-]*)?$/.test(href);
 }
 function sectionLabel(kind: SectionKind) { return TYPES.find(t=>t.kind===kind)?.label || kind; }
-function EditorPreview({ sections, selectedId, onSelect, site, device, mediaUrls, onImageChange }: {
-  sections: Section[];selectedId:string|null;onSelect:(id:string)=>void;site:Site;device:Device;mediaUrls:Record<string,string>;onImageChange:(id:string,next:HeroImageSettings)=>void
+function EditorPreview({ sections, selectedId, onSelect, site, device, mediaUrls, onImageChange, onContentChange }: {
+  sections: Section[];selectedId:string|null;onSelect:(id:string)=>void;site:Site;device:Device;mediaUrls:Record<string,string>;onImageChange:(id:string,next:HeroImageSettings)=>void;onContentChange:(id:string,key:'kicker'|'title'|'body'|'buttonLabel',value:string)=>void
 }) {
   return <div className={'lg-studio-viewport lg-studio-viewport--'+device} style={{'--studio-accent':site.accent || '#c9f36a'} as CSSProperties}>
     <div className="lg-studio-preview-browser">
@@ -85,18 +86,27 @@ function EditorPreview({ sections, selectedId, onSelect, site, device, mediaUrls
           aria-label={'Editar secção '+(index+1)+': '+sectionLabel(section.kind)}>Editar <span>{index+1}</span></button>
         {section.kind==='hero' && <div className="lg-studio-hero">
           {section.mediaId&&mediaUrls[section.mediaId]&&<HeroImageLayer src={mediaUrls[section.mediaId]} settings={section.heroImage} onCommit={next=>onImageChange(section.id,next)} />}
-          <small>{section.kicker}</small><h2>{section.title}</h2><p>{section.body}</p><span className="lg-studio-cta-button" title={section.buttonHref&&safeLink(section.buttonHref)?'Destino configurado: '+section.buttonHref:'Botão demonstrativo sem destino validado'}>{section.buttonLabel || 'Saiba mais'}</span>
+          <StudioInlineText as="small" label="Etiqueta" value={section.kicker} maxLength={90} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'kicker',value)}/>
+          <StudioInlineText as="h2" label="Título" value={section.title} maxLength={180} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'title',value)}/>
+          <StudioInlineText as="p" label="Descrição" value={section.body} multiline maxLength={1000} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'body',value)}/>
+          <StudioInlineText as="span" className="lg-studio-cta-button" label="Botão" value={section.buttonLabel||'Saiba mais'} maxLength={65} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'buttonLabel',value)}/>
           <div className="lg-studio-hero-orb" aria-hidden="true"/>
         </div>}
         {section.kind==='text' && <div className="lg-studio-text-section">
-          <small>{section.kicker}</small><h2>{section.title}</h2><p>{section.body}</p>
+          <StudioInlineText as="small" label="Etiqueta" value={section.kicker} maxLength={90} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'kicker',value)}/>
+          <StudioInlineText as="h2" label="Título" value={section.title} maxLength={180} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'title',value)}/>
+          <StudioInlineText as="p" label="Descrição" value={section.body} multiline maxLength={1000} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'body',value)}/>
         </div>}
         {section.kind==='features' && <div className="lg-studio-features-section">
-          <small>{section.kicker}</small><h2>{section.title}</h2><p>{section.body}</p>
+          <StudioInlineText as="small" label="Etiqueta" value={section.kicker} maxLength={90} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'kicker',value)}/>
+          <StudioInlineText as="h2" label="Título" value={section.title} maxLength={180} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'title',value)}/>
+          <StudioInlineText as="p" label="Descrição" value={section.body} multiline maxLength={1000} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'body',value)}/>
           <div className="lg-studio-features-grid">{section.items.map((item,i)=><div key={i}><span>0{i+1}</span><strong>{item}</strong></div>)}</div>
         </div>}
         {section.kind==='cta' && <div className="lg-studio-cta-section">
-          <small>{section.kicker}</small><h2>{section.title}</h2><p>{section.body}</p><span className="lg-studio-cta-button" title={section.buttonHref&&safeLink(section.buttonHref)?'Destino configurado: '+section.buttonHref:'Botão demonstrativo sem destino validado'}>{section.buttonLabel || 'Contactar'}</span>
+          <StudioInlineText as="small" label="Etiqueta" value={section.kicker} maxLength={90} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'kicker',value)}/>
+          <StudioInlineText as="h2" label="Título" value={section.title} maxLength={180} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'title',value)}/>
+          <StudioInlineText as="p" label="Descrição" value={section.body} multiline maxLength={1000} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'body',value)}/><StudioInlineText as="span" className="lg-studio-cta-button" label="Botão" value={section.buttonLabel||'Contactar'} maxLength={65} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'buttonLabel',value)}/>
         </div>}
       </section>)}
       {!sections.length && <div className="lg-studio-empty-canvas">Adiciona a primeira secção no painel lateral.</div>}
@@ -143,6 +153,10 @@ export function WebsiteStudioPage() {
   const change=(key: 'kicker'|'title'|'body'|'buttonLabel'|'buttonHref',value:string)=>{
     if(!selected)return;
     commit(blocks.map(b=>b.id===selected.id?{...b,[key]:value}:b),selected.id);
+  };
+  const commitInlineContent=(sectionId:string,key:'kicker'|'title'|'body'|'buttonLabel',value:string)=>{
+    if(!blocks.some(b=>b.id===sectionId))return;
+    commit(blocks.map(b=>b.id===sectionId?{...b,[key]:value}:b),sectionId);
   };
   const changeItem=(index:number,value:string)=>{
     if(!selected)return;
@@ -293,7 +307,7 @@ export function WebsiteStudioPage() {
       </aside>
       <div className="lg-studio-canvas-area" aria-label="Pré-visualização da página">
         <div className="lg-studio-canvas-header"><span><Globe2 size={15}/> {site.domain}</span><span>{device==='desktop'?'Desktop':'Mobile'} · {dirty?'Alterações não guardadas':'Rascunho local'}</span></div>
-        <EditorPreview sections={blocks} selectedId={selectedId} onSelect={setSelectedId} site={site} device={device} mediaUrls={mediaUrls} onImageChange={commitCanvasImage}/>
+        <EditorPreview sections={blocks} selectedId={selectedId} onSelect={setSelectedId} site={site} device={device} mediaUrls={mediaUrls} onImageChange={commitCanvasImage} onContentChange={commitInlineContent}/>
       </div>
       <aside className="lg-studio-panel lg-studio-inspector" aria-label="Propriedades da secção selecionada">
         <div className="lg-studio-panel-heading"><Type size={17}/><strong>Propriedades</strong></div>
