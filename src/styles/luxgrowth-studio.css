@@ -92,6 +92,9 @@
 .lg-studio-viewport--mobile .lg-studio-features-grid{grid-template-columns:1fr;gap:8px}
 @media(max-width:1180px){.lg-studio-columns{grid-template-columns:210px minmax(290px,1fr)}.lg-studio-inspector{grid-column:1/-1}.lg-studio-inspector .lg-studio-panel-heading{margin-bottom:12px}.lg-studio-inspector label{max-width:620px}}
 @media(max-width:740px){.lg-studio-columns{grid-template-columns:1fr}.lg-studio-layers,.lg-studio-inspector{grid-column:1/-1}.lg-studio-canvas-area{min-height:420px}.lg-studio-toolbar{gap:6px}.lg-studio-toolbar>label{flex:1 1 160px}.lg-studio-toolbar>label select{max-width:155px}}
+ .lg-studio-layer[draggable='true'] { cursor:grab; }
+.lg-studio-layer.is-dragging {opacity:.45;outline:2px dashed #9ccc6b;}
+.lg-studio-layer[draggable='true']:active {cursor:grabbing;}
 @media(prefers-reduced-motion:reduce){.lg-studio-viewport{transition:none}}
 
 /* Studio V1.1 — the contextual navigation stays above the editor, not on top of it.
