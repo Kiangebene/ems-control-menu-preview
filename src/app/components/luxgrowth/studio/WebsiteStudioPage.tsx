@@ -6,9 +6,10 @@ import { LocalMediaLibrary, usePreviewMedia } from './LocalMediaLibrary';
 type Site = { id: string; name: string; domain: string; accent?: string; description?: string };
 type CmsContent = { id: string; websiteId: string; title: string; body: string; excerpt: string; type?: string; slug?: string };
 type SectionKind = 'hero' | 'text' | 'features' | 'cta';
+type HeroImageSettings = {opacityPct?:number;positionX?:number;positionY?:number;fit?:'cover'|'contain'};
 type Section = {
   id: string; kind: SectionKind; kicker: string; title: string; body: string;
-  buttonLabel: string; buttonHref?:string; items: string[]; mediaId?:string; presentation?:{backgroundColor?:string;color?:string;textAlign?:'left'|'center'|'right';paddingTopPx?:number;paddingBottomPx?:number;fontFamily?:string;fontSizePx?:number;fontWeight?:number;lineHeight?:number};
+  buttonLabel: string; buttonHref?:string; items: string[]; mediaId?:string; heroImage?:HeroImageSettings; presentation?:{backgroundColor?:string;color?:string;textAlign?:'left'|'center'|'right';paddingTopPx?:number;paddingBottomPx?:number;fontFamily?:string;fontSizePx?:number;fontWeight?:number;lineHeight?:number};
 };
 type Device = 'desktop' | 'mobile';
 const SITE_KEY = 'luxgrowth-websites-prototype-v1';
@@ -32,7 +33,7 @@ const TYPES: { kind: SectionKind; label: string; detail: string }[] = [
   { kind: 'cta', label: 'Chamada à ação', detail: 'Mensagem e botão' },
 ];
 const blockId = () => typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : 'section-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
-const copySections = (items: Section[]) => items.map(item => ({ ...item, items: [...item.items],presentation:item.presentation?{...item.presentation}:undefined }));
+const copySections = (items: Section[]) => items.map(item => ({ ...item, items: [...item.items],heroImage:item.heroImage?{...item.heroImage}:undefined,presentation:item.presentation?{...item.presentation}:undefined }));
 function fromStorage<T>(key: string, fallback: T): T {
   try { const raw = window.localStorage.getItem(key); return raw ? JSON.parse(raw) as T : fallback; }
   catch { return fallback; }
@@ -81,7 +82,8 @@ function EditorPreview({ sections, selectedId, onSelect, site, device, mediaUrls
         <button type="button" className="lg-studio-render-edit" onClick={()=>onSelect(section.id)}
           aria-label={'Editar secção '+(index+1)+': '+sectionLabel(section.kind)}>Editar <span>{index+1}</span></button>
         {section.kind==='hero' && <div className="lg-studio-hero">
-          {section.mediaId&&mediaUrls[section.mediaId]&&<img className="lg-studio-hero-media" src={mediaUrls[section.mediaId]} alt="" />}
+          {section.mediaId&&mediaUrls[section.mediaId]&&<img className="lg-studio-hero-media" src={mediaUrls[section.mediaId]} alt=""
+            style={{opacity:(section.heroImage?.opacityPct??22)/100,objectPosition:(section.heroImage?.positionX??50)+'% '+(section.heroImage?.positionY??50)+'%',objectFit:section.heroImage?.fit??'cover'}} />}
           <small>{section.kicker}</small><h2>{section.title}</h2><p>{section.body}</p><span className="lg-studio-cta-button" title={section.buttonHref&&safeLink(section.buttonHref)?'Destino configurado: '+section.buttonHref:'Botão demonstrativo sem destino validado'}>{section.buttonLabel || 'Saiba mais'}</span>
           <div className="lg-studio-hero-orb" aria-hidden="true"/>
         </div>}
@@ -156,6 +158,15 @@ export function WebsiteStudioPage() {
     if(!selected)return;
     commit(blocks.map(b=>b.id===selected.id?{...b,mediaId}:b),selected.id);
   };
+  const changeHeroImage=(key:keyof HeroImageSettings,value:number|'cover'|'contain')=>{
+    if(!selected || selected.kind!=='hero')return;
+    const heroImage={...selected.heroImage,[key]:value};
+    commit(blocks.map(b=>b.id===selected.id?{...b,heroImage}:b),selected.id);
+  };
+  const resetHeroImage=()=>{
+    if(!selected || selected.kind!=='hero')return;
+    commit(blocks.map(b=>b.id===selected.id?{...b,heroImage:undefined}:b),selected.id);
+  };
   const add=(kind:SectionKind)=>{
     const block=makeSection(kind);
     commit([...blocks,block],block.id);
@@ -163,7 +174,7 @@ export function WebsiteStudioPage() {
   const duplicate=()=>{
     if(!selected)return;
     const at=blocks.findIndex(s=>s.id===selected.id);
-    const clone={...selected,id:blockId(),items:[...selected.items],presentation:selected.presentation?{...selected.presentation}:undefined};
+    const clone={...selected,id:blockId(),items:[...selected.items],presentation:selected.presentation?{...selected.presentation}:undefined,heroImage:selected.heroImage?{...selected.heroImage}:undefined};
     const next=[...blocks];next.splice(at+1,0,clone);commit(next,clone.id);
   };
   const remove=()=>{
@@ -298,6 +309,28 @@ export function WebsiteStudioPage() {
           {selected.kind==='hero'&&<div className="lg-studio-design-fields">
             <strong>Imagem de destaque</strong><button type="button" className="lg-studio-button" onClick={()=>setMediaOpen(true)}><ImageIcon size={15}/> Escolher imagem</button>
             {selected.mediaId&&(mediaUrls[selected.mediaId]?<div className="lg-studio-media-selected"><img src={mediaUrls[selected.mediaId]} alt="Imagem do Hero"/><button type="button" onClick={()=>changeMedia(undefined)}>Remover associação</button></div>:<p className="lg-studio-panel-subtitle">Imagem indisponível neste navegador.</p>)}
+            {selected.mediaId&&mediaUrls[selected.mediaId]&&<div className="lg-studio-image-controls">
+              <label>Visibilidade da imagem ({selected.heroImage?.opacityPct??22}%)
+                <input type="range" min="0" max="100" step="5" value={selected.heroImage?.opacityPct??22}
+                  onChange={e=>changeHeroImage('opacityPct',Number(e.target.value))}/>
+              </label>
+              <label>Enquadramento
+                <select value={selected.heroImage?.fit??'cover'} onChange={e=>changeHeroImage('fit',e.target.value as 'cover'|'contain')}>
+                  <option value="cover">Preencher espaço (cortar imagem)</option>
+                  <option value="contain">Mostrar imagem completa</option>
+                </select>
+              </label>
+              <label>Posição horizontal ({selected.heroImage?.positionX??50}%)
+                <input type="range" min="0" max="100" step="5" value={selected.heroImage?.positionX??50}
+                  onChange={e=>changeHeroImage('positionX',Number(e.target.value))}/>
+              </label>
+              <label>Posição vertical ({selected.heroImage?.positionY??50}%)
+                <input type="range" min="0" max="100" step="5" value={selected.heroImage?.positionY??50}
+                  onChange={e=>changeHeroImage('positionY',Number(e.target.value))}/>
+              </label>
+              <button type="button" className="lg-studio-design-clear" onClick={resetHeroImage}>Repor enquadramento original</button>
+              <p className="lg-studio-panel-subtitle">Ajustes visíveis apenas no editor local. A fotografia não é enviada para servidores.</p>
+            </div>}
           </div>}
           <div className="lg-studio-design-fields"><strong>Design e espaçamento</strong>
             <label>Cor de fundo <input type="color" value={selected.presentation?.backgroundColor||'#ffffff'} onChange={e=>changePresentation('backgroundColor',e.target.value)}/></label>
