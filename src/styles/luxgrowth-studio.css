@@ -132,3 +132,43 @@
   .lg-main--studio .lg-topnav { margin-top: 10px; }
   .lg-main--studio .lg-studio { padding-top: 5px; }
 }
+
+
+/* Studio V1.2: local media picker + safe visual inspector. Keeps original 3-column layout. */
+.lg-studio-render .lg-studio-hero,.lg-studio-render .lg-studio-text-section,.lg-studio-render .lg-studio-features-section,.lg-studio-render .lg-studio-cta-section{padding-top:var(--lg-pad-top,46px);padding-bottom:var(--lg-pad-bottom,46px)}
+.lg-studio-render[style*="background-color"] .lg-studio-hero,.lg-studio-render[style*="background-color"] .lg-studio-text-section,.lg-studio-render[style*="background-color"] .lg-studio-features-section,.lg-studio-render[style*="background-color"] .lg-studio-cta-section{background:transparent}
+.lg-studio-render[style*="color"] h2,.lg-studio-render[style*="color"] p,.lg-studio-render[style*="color"] small{color:inherit}
+.lg-studio-hero-media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.22;pointer-events:none}
+.lg-studio-hero{isolation:isolate}
+.lg-studio-design-fields{border-top:1px solid var(--border);margin-top:15px;padding:15px 0;display:flex;flex-direction:column;align-items:stretch;gap:9px}
+.lg-studio-design-fields>strong{font-size:12px}
+.lg-studio-design-fields label{margin-bottom:2px}
+.lg-studio-design-fields input[type="color"]{height:38px;padding:3px;cursor:pointer}
+.lg-studio-design-fields select{width:100%;padding:9px;border:1px solid var(--border);border-radius:9px;background:var(--background);color:var(--foreground);font-size:11px}
+.lg-studio-design-fields .lg-studio-button{width:100%;justify-content:center}
+.lg-studio-design-clear{font-size:10px;color:var(--muted-foreground);text-decoration:underline;text-align:left;margin-bottom:9px}
+.lg-studio-media-selected img{width:100%;max-height:100px;object-fit:cover;border-radius:8px;margin:5px 0}
+.lg-studio-media-selected button{font-size:10px;color:#a75d4c;text-decoration:underline}
+.lg-studio-media-backdrop{position:fixed;inset:0;z-index:1000;background:#101a15a8;backdrop-filter:blur(5px);display:flex;justify-content:center;align-items:center;padding:18px}
+.lg-studio-media-modal{background:var(--card);color:var(--foreground);border:1px solid var(--border);border-radius:20px;width:min(800px,96vw);max-height:85vh;overflow-y:auto;box-shadow:0 25px 65px #101a1559;padding:24px}
+.lg-studio-media-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;border-bottom:1px solid var(--border);padding-bottom:18px}
+.lg-studio-media-heading small{font-size:10px;font-weight:750;letter-spacing:.16em;color:#78ac44}
+.lg-studio-media-heading h2{font-size:24px;line-height:1.2;margin:7px 0}
+.lg-studio-media-heading p{font-size:12px;color:var(--muted-foreground)}
+.lg-studio-media-heading button{padding:6px;border:1px solid var(--border);border-radius:9px}
+.lg-studio-media-actions{display:flex;align-items:center;gap:15px;flex-wrap:wrap;padding:18px 0}
+.lg-studio-media-actions label{cursor:pointer}
+.lg-studio-media-actions input[type="file"]{display:none}
+.lg-studio-media-actions>span{font-size:11px;color:var(--muted-foreground)}
+.lg-studio-media-message{padding:8px;font-size:12px;color:#725532}
+.lg-studio-media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:14px;max-height:48vh;overflow:auto}
+.lg-studio-media-item{position:relative;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.lg-studio-media-item.is-selected{outline:2px solid #b6e369}
+.lg-studio-media-select{display:flex;width:100%;flex-direction:column;align-items:stretch;text-align:left}
+.lg-studio-media-select img{width:100%;height:125px;object-fit:cover}
+.lg-studio-media-select span{padding:9px;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lg-studio-media-select svg{position:absolute;top:8px;left:8px;background:#c9f36a;padding:3px;border-radius:50%}
+.lg-studio-media-remove{position:absolute;right:7px;top:7px;background:white;color:#ae4e41;padding:6px;border-radius:8px}
+.lg-studio-media-footer{border-top:1px solid var(--border);margin-top:20px;padding-top:16px;display:flex;gap:10px;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted-foreground)}
+.lg-studio-media-footer button{text-decoration:underline;cursor:pointer}
+@media(max-width:740px){.lg-studio-media-modal{padding:14px}.lg-studio-media-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
