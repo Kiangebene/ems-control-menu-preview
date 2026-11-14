@@ -6,11 +6,11 @@ import { Plus, Search, Layers3 } from 'lucide-react';
  * feat/website-studio-unified-editor-20261102 branch of luxgrowth-ia.
  *
  * This prototype intentionally does NOT embed Forma runtime or import its
- * canonical contracts. Four V6 native section kinds plus four local-only blocks can be added.
- * Image, Divider, Heading and Button are local-only, excluded from native publication export. Other entries are future integration targets.
+ * canonical contracts. Four V6 native section kinds plus seven local-only blocks can be added.
+ * Image, Divider, Heading, Button, Container, Columns and Grid are local-only, excluded from native publication export. Other entries are future integration targets.
  * No production endpoint, tenant data or publication action is used.
  */
-type SectionKind = 'hero' | 'text' | 'features' | 'cta' | 'image' | 'divider' | 'heading' | 'button';
+type SectionKind = 'hero' | 'text' | 'features' | 'cta' | 'image' | 'divider' | 'heading' | 'button' | 'container' | 'columns' | 'grid';
 type CatalogItem = {
   id: string;
   label: string;
@@ -32,10 +32,10 @@ const GROUPS: Group[] = [
   ]),
   group('Layout', [
     ['section', 'Secção', 'Agrupar elementos'],
-    ['container', 'Contentor', 'Largura e alinhamento'],
+    ['container', 'Contentor', 'Largura e alinhamento', 'container'],
     ['flex', 'Flex', 'Disposição flexível'],
-    ['grid', 'Grid', 'Grelha responsiva'],
-    ['columns', 'Colunas', 'Distribuição horizontal'],
+    ['grid', 'Grid', 'Grelha responsiva', 'grid'],
+    ['columns', 'Colunas', 'Distribuição horizontal', 'columns'],
     ['divider', 'Divisor', 'Separador visual', 'divider'],
     ['spacer', 'Espaçador', 'Espaço entre elementos'],
   ]),

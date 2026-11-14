@@ -11,11 +11,11 @@ import './studio-sidebar-tabs.css';
 
 type Site = { id: string; name: string; domain: string; accent?: string; description?: string };
 type CmsContent = { id: string; websiteId: string; title: string; body: string; excerpt: string; type?: string; slug?: string };
-type SectionKind = 'hero' | 'text' | 'features' | 'cta' | 'image' | 'divider' | 'heading' | 'button';
+type SectionKind = 'hero' | 'text' | 'features' | 'cta' | 'image' | 'divider' | 'heading' | 'button' | 'container' | 'columns' | 'grid';
 type HeroImageSettings = {opacityPct?:number;positionX?:number;positionY?:number;fit?:'cover'|'contain';zoomPct?:number;offsetX?:number;offsetY?:number};
 type Section = {
   id: string; kind: SectionKind; kicker: string; title: string; body: string;
-  buttonLabel: string; buttonHref?:string; items: string[]; mediaId?:string; heroImage?:HeroImageSettings; presentation?:{backgroundColor?:string;color?:string;textAlign?:'left'|'center'|'right';paddingTopPx?:number;paddingBottomPx?:number;fontFamily?:string;fontSizePx?:number;fontWeight?:number;lineHeight?:number};
+  buttonLabel: string; buttonHref?:string; items: string[]; layoutColumns?:number; layoutGapPx?:number; layoutWidthPx?:number; mediaId?:string; heroImage?:HeroImageSettings; presentation?:{backgroundColor?:string;color?:string;textAlign?:'left'|'center'|'right';paddingTopPx?:number;paddingBottomPx?:number;fontFamily?:string;fontSizePx?:number;fontWeight?:number;lineHeight?:number};
 };
 type Device = 'desktop' | 'mobile';
 const SITE_KEY = 'luxgrowth-websites-prototype-v1';
@@ -41,6 +41,9 @@ const TYPES: { kind: SectionKind; label: string; detail: string }[] = [
   { kind: 'divider', label: 'Divisor', detail: 'Separador visual' },
   { kind: 'heading', label: 'Título', detail: 'Título independente' },
   { kind: 'button', label: 'Botão', detail: 'Botão de chamada à ação' },
+  { kind: 'container', label: 'Contentor', detail: 'Conteúdo com largura controlada' },
+  { kind: 'columns', label: 'Colunas', detail: 'Conteúdo em colunas responsivas' },
+  { kind: 'grid', label: 'Grid', detail: 'Cartões em grelha responsiva' },
 ];
 const blockId = () => typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : 'section-' + Date.now() + '-' + Math.floor(Math.random() * 100000);
 const copySections = (items: Section[]) => items.map(item => ({ ...item, items: [...item.items],heroImage:item.heroImage?{...item.heroImage}:undefined,presentation:item.presentation?{...item.presentation}:undefined }));
@@ -67,6 +70,9 @@ function makeSection(kind: SectionKind, page?: CmsContent): Section {
     case 'divider': return { id:blockId(),kind,kicker:'',title:'Separador',body:'',buttonLabel:'',items:[] };
     case 'heading': return { id:blockId(),kind,kicker:'',title:'Um título marcante',body:'',buttonLabel:'',items:[] };
     case 'button': return { id:blockId(),kind,kicker:'',title:'Botão',body:'',buttonLabel:'Saiba mais',buttonHref:'#contacto',items:[] };
+    case 'container': return {id:blockId(),kind,kicker:'CONTEÚDO',title:'O nosso compromisso',body:'Apresenta a informação principal desta área.',buttonLabel:'',items:[],layoutWidthPx:920};
+    case 'columns': return {id:blockId(),kind,kicker:'EM DESTAQUE',title:'As nossas soluções',body:'',buttonLabel:'',items:['Primeira solução','Segunda solução'],layoutColumns:2,layoutGapPx:16};
+    case 'grid': return {id:blockId(),kind,kicker:'EXPLORA',title:'O que oferecemos',body:'',buttonLabel:'',items:['Serviço A','Serviço B','Serviço C'],layoutColumns:3,layoutGapPx:14};
   }
 }
 function initialSections(page?: CmsContent) {
@@ -102,6 +108,18 @@ function EditorPreview({ sections, selectedId, onSelect, site, device, mediaUrls
         {section.kind==='divider'&&<div className="lg-studio-divider-section" aria-label="Separador"><span/></div>}
         {section.kind==='heading'&&<div className="lg-studio-heading-section"><StudioInlineText as="h2" label="Título" value={section.title} maxLength={180} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'title',value)}/></div>}
         {section.kind==='button'&&<div className="lg-studio-button-section"><StudioInlineText as="span" className="lg-studio-cta-button" label="Texto do botão" value={section.buttonLabel||'Saiba mais'} maxLength={65} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'buttonLabel',value)}/></div>}
+        {section.kind==='container'&&<div className="lg-studio-layout-section lg-studio-container-section"><div className="lg-studio-container-inner" style={{maxWidth:section.layoutWidthPx??920}}>
+          <StudioInlineText as="small" label="Etiqueta" value={section.kicker} maxLength={90} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'kicker',value)}/>
+          <StudioInlineText as="h2" label="Título" value={section.title} maxLength={180} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'title',value)}/>
+          <StudioInlineText as="p" label="Texto" value={section.body} multiline maxLength={1000} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'body',value)}/>
+        </div></div>}
+        {(section.kind==='columns'||section.kind==='grid')&&<div className={'lg-studio-layout-section lg-studio-'+section.kind+'-section'}>
+          <StudioInlineText as="small" label="Etiqueta" value={section.kicker} maxLength={90} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'kicker',value)}/>
+          <StudioInlineText as="h2" label="Título" value={section.title} maxLength={180} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'title',value)}/>
+          <div className="lg-studio-layout-cells" style={{'--lg-layout-columns':section.layoutColumns??(section.kind==='grid'?3:2),'--lg-layout-gap':(section.layoutGapPx??16)+'px'} as CSSProperties}>
+            {section.items.map((item,i)=><div className="lg-studio-layout-cell" key={i}><span className="lg-studio-layout-cell-number">{String(i+1).padStart(2,'0')}</span><strong>{item||'Novo item'}</strong></div>)}
+          </div>
+        </div>}
         {section.kind==='hero' && <div className="lg-studio-hero">
           {section.mediaId&&mediaUrls[section.mediaId]&&<HeroImageLayer src={mediaUrls[section.mediaId]} settings={section.heroImage} onCommit={next=>onImageChange(section.id,next)} />}
           <StudioInlineText as="small" label="Etiqueta" value={section.kicker} maxLength={90} onSelect={()=>onSelect(section.id)} onCommit={value=>onContentChange(section.id,'kicker',value)}/>
@@ -203,6 +221,18 @@ export function WebsiteStudioPage() {
   const resetHeroImage=()=>{
     if(!selected || selected.kind!=='hero')return;
     commit(blocks.map(b=>b.id===selected.id?{...b,heroImage:undefined}:b),selected.id);
+  };
+  const changeLayout=(key:'layoutColumns'|'layoutGapPx'|'layoutWidthPx',value:number)=>{
+    if(!selected)return;
+    commit(blocks.map(b=>b.id===selected.id?{...b,[key]:value}:b),selected.id);
+  };
+  const addLayoutItem=()=>{
+    if(!selected||!['columns','grid'].includes(selected.kind)||selected.items.length>=12)return;
+    commit(blocks.map(b=>b.id===selected.id?{...b,items:[...b.items,'Novo item']}:b),selected.id);
+  };
+  const removeLayoutItem=(index:number)=>{
+    if(!selected||!['columns','grid'].includes(selected.kind)||selected.items.length<=1)return;
+    commit(blocks.map(b=>b.id===selected.id?{...b,items:b.items.filter((_,i)=>i!==index)}:b),selected.id);
   };
   const add=(kind:SectionKind)=>{
     const block=makeSection(kind);
@@ -391,6 +421,16 @@ export function WebsiteStudioPage() {
               {safeLink(selected.buttonHref??'#contacto')?'Destino válido. No protótipo, os botões não abrem páginas externas.':'Destino inválido. Usa uma âncora #id, uma rota /... ou um endereço HTTPS.'}
             </p>
           </>}
+          {selected.kind==='container'&&<div className="lg-studio-feature-fields"><strong>Dimensões do contentor</strong>
+            <label>Largura máxima (px) <input type="number" min="320" max="1440" step="20" value={selected.layoutWidthPx??920} onChange={e=>changeLayout('layoutWidthPx',Math.max(320,Math.min(1440,Number(e.target.value)||920)))}/></label>
+          </div>}
+          {(selected.kind==='columns'||selected.kind==='grid')&&<div className="lg-studio-feature-fields"><strong>Disposição</strong>
+            <label>Número de colunas <select value={selected.layoutColumns??(selected.kind==='grid'?3:2)} onChange={e=>changeLayout('layoutColumns',Number(e.target.value))}><option value={1}>1</option><option value={2}>2</option><option value={3}>3</option><option value={4}>4</option></select></label>
+            <label>Espaçamento entre elementos (px) <input type="number" min="0" max="80" value={selected.layoutGapPx??16} onChange={e=>changeLayout('layoutGapPx',Math.max(0,Math.min(80,Number(e.target.value)||0)))}/></label>
+            <strong>Elementos ({selected.items.length}/12)</strong>
+            {selected.items.map((v,i)=><div className="lg-studio-layout-item-editor" key={i}><label>Elemento {i+1}<input value={v} maxLength={140} onChange={e=>changeItem(i,e.target.value)}/></label><button type="button" onClick={()=>removeLayoutItem(i)} disabled={selected.items.length<=1} aria-label={'Remover elemento '+(i+1)} title="Remover elemento"><Trash2 size={15}/></button></div>)}
+            <button type="button" className="lg-studio-button" onClick={addLayoutItem} disabled={selected.items.length>=12}><Plus size={14}/> Adicionar elemento</button>
+          </div>}
           {selected.kind==='features'&&<div className="lg-studio-feature-fields"><strong>Benefícios</strong>{selected.items.map((v,i)=><label key={i}>Benefício {i+1} <input value={v} maxLength={100} onChange={e=>changeItem(i,e.target.value)}/></label>)}</div>}
           {(selected.kind==='hero'||selected.kind==='image')&&<div className="lg-studio-design-fields">
             <strong>Imagem de destaque</strong><button type="button" className="lg-studio-button" onClick={()=>setMediaOpen(true)}><ImageIcon size={15}/> Escolher imagem</button>
@@ -452,7 +492,7 @@ export function WebsiteStudioPage() {
         </>}
       </aside>
     </div>
-    <div className="lg-studio-footer-note"><FileText size={15}/> Protótipo isolado: 8 componentes editáveis, rascunhos locais e imagens em IndexedDB. Imagem, Divisor, Título e Botão são blocos locais não publicáveis. Sem publicação.</div>
+    <div className="lg-studio-footer-note"><FileText size={15}/> Protótipo isolado: 11 componentes editáveis e rascunhos locais. Layouts são secções independentes (não contentores aninhados) e não são publicáveis. Sem publicação.</div>
     <LocalMediaLibrary open={mediaOpen} siteName={site.name} items={media.items} selectedId={selected?.mediaId} busy={media.busy} error={media.error} onUpload={media.upload} onRemove={media.remove} onSelect={changeMedia} onClose={()=>setMediaOpen(false)}/>
   </section>;
 }
