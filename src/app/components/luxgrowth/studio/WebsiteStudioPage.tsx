@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { ArrowDown, ArrowUp, Check, ChevronDown, Copy, Eye, FileText, Globe2, GripVertical, LayoutTemplate, Monitor, Plus, Redo2, RotateCcw, Save, Smartphone, Trash2, Type, Undo2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, Copy, Download, Eye, FileText, Globe2, GripVertical, LayoutTemplate, Monitor, Plus, Redo2, RotateCcw, Save, Smartphone, Trash2, Type, Undo2 } from 'lucide-react';
+import { previewNativeBlocks } from './nativeBlockAdapter';
 
 type Site = { id: string; name: string; domain: string; accent?: string; description?: string };
 type CmsContent = { id: string; websiteId: string; title: string; body: string; excerpt: string; type?: string; slug?: string };
@@ -112,6 +113,7 @@ export function WebsiteStudioPage() {
   const [dirty,setDirty]=useState(false);
   const [message,setMessage]=useState('');
   const [showHelp,setShowHelp]=useState(false);
+  const [draggedId,setDraggedId]=useState<string|null>(null);
   useEffect(()=>{
     const cached=existingDrafts()[draftKey];
     const next=Array.isArray(cached)&&cached.every(b=>b && typeof b.kind==='string') ? copySections(cached) : initialSections(page);
@@ -150,6 +152,28 @@ export function WebsiteStudioPage() {
     const at=blocks.findIndex(s=>s.id===selected.id),to=at+direction;
     if(to<0||to>=blocks.length)return;
     const next=[...blocks];[next[at],next[to]]=[next[to],next[at]];commit(next,selected.id);
+  };
+  const dropLayer=(targetId:string)=>{
+    if(!draggedId || draggedId===targetId){setDraggedId(null);return;}
+    const from=blocks.findIndex(b=>b.id===draggedId);
+    const target=blocks.findIndex(b=>b.id===targetId);
+    if(from<0 || target<0){setDraggedId(null);return;}
+    const next=[...blocks];
+    const [moved]=next.splice(from,1);
+    next.splice(target,0,moved);
+    commit(next,draggedId);
+    setDraggedId(null);
+  };
+  const exportNativeDraft=()=>{
+    const payload=previewNativeBlocks(blocks);
+    const data=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
+    const url=URL.createObjectURL(data);
+    const anchor=document.createElement('a');
+    anchor.href=url;
+    anchor.download='luxgrowth-studio-prototype-'+siteId+'-draft.json';
+    anchor.click();
+    window.setTimeout(()=>URL.revokeObjectURL(url),1000);
+    setMessage('Pré-exportação gerada. O JSON ainda precisa da validação do contrato real e NÃO é publicável.');
   };
   const backwards=()=>{
     if(!undo.length)return;
@@ -200,17 +224,24 @@ export function WebsiteStudioPage() {
         <button type="button" title="Desfazer" disabled={!undo.length} onClick={backwards}><Undo2 size={16}/></button>
         <button type="button" title="Refazer" disabled={!redo.length} onClick={forwards}><Redo2 size={16}/></button>
       </div>
+      <button type="button" className="lg-studio-button" onClick={exportNativeDraft} title="Exportar prévia dos blocos no formato do Studio original"><Download size={15}/> JSON</button>
       <button type="button" className="lg-studio-button" onClick={()=>setShowHelp(v=>!v)}><Eye size={15}/> Ajuda</button>
       <button type="button" className="lg-studio-button lg-studio-button--save" onClick={save}><Save size={16}/>{dirty?'Guardar alterações':'Guardar rascunho'}</button>
     </div>
-    {showHelp&&<div className="lg-studio-notice" role="note"><strong>Como testar:</strong> escolhe um bloco na coluna esquerda, edita-o na direita e vê o resultado ao centro. Podes adicionar, duplicar, reorganizar, desfazer/refazer e guardar. O editor não escreve no CMS real nem publica websites.</div>}
+    {showHelp&&<div className="lg-studio-notice" role="note"><strong>Como testar:</strong> escolhe um bloco na coluna esquerda, edita-o na direita e vê o resultado ao centro. Podes adicionar, duplicar, arrastar camadas para reorganizar, desfazer/refazer, guardar e exportar um JSON compatível em estrutura com os blocos originais. O JSON necessita de validação real antes da utilização. O editor não publica websites.</div>}
     {message&&<div className="lg-studio-notice" role="status">{message}</div>}
     <div className="lg-studio-columns">
       <aside className="lg-studio-panel lg-studio-layers" aria-label="Camadas e secções">
         <div className="lg-studio-panel-heading"><LayoutTemplate size={17}/><strong>Estrutura da página</strong></div>
         <p className="lg-studio-panel-subtitle">{blocks.length} secções · {page?.title || 'Página inicial'}</p>
         <div className="lg-studio-layer-list">
-          {blocks.map((block,i)=><button type="button" key={block.id} className={'lg-studio-layer'+(selectedId===block.id?' is-selected':'')} onClick={()=>setSelectedId(block.id)}>
+          {blocks.map((block,i)=><button type="button" key={block.id} draggable
+            onDragStart={event=>{setDraggedId(block.id);event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',block.id)}}
+            onDragOver={event=>{event.preventDefault();event.dataTransfer.dropEffect='move'}}
+            onDrop={event=>{event.preventDefault();dropLayer(block.id)}}
+            onDragEnd={()=>setDraggedId(null)}
+            className={'lg-studio-layer'+(selectedId===block.id?' is-selected':'')+(draggedId===block.id?' is-dragging':'')}
+            title="Arrastar para reorganizar" onClick={()=>setSelectedId(block.id)}>
             <GripVertical size={15}/><span><strong>{sectionLabel(block.kind)}</strong><small>{block.title||'Sem título'}</small></span><em>{i+1}</em>
           </button>)}
         </div>
@@ -242,6 +273,6 @@ export function WebsiteStudioPage() {
         </>}
       </aside>
     </div>
-    <div className="lg-studio-footer-note"><FileText size={15}/> Protótipo isolado: alterações em localStorage, sem ligação ao Website Studio real, APIs ou publicação. Os dados do CMS servem apenas para iniciar os títulos e textos.</div>
+    <div className="lg-studio-footer-note"><FileText size={15}/> Protótipo isolado: rascunhos locais e pré-exportação JSON de blocos. Sem autenticação, persistência de produção, importação automática ou publicação. Validar o JSON no contrato original antes de integrar.</div>
   </section>;
 }
