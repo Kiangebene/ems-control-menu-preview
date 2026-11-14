@@ -8,7 +8,7 @@ type CmsContent = { id: string; websiteId: string; title: string; body: string; 
 type SectionKind = 'hero' | 'text' | 'features' | 'cta';
 type Section = {
   id: string; kind: SectionKind; kicker: string; title: string; body: string;
-  buttonLabel: string; items: string[]; mediaId?:string; presentation?:{backgroundColor?:string;color?:string;textAlign?:'left'|'center'|'right';paddingTopPx?:number;paddingBottomPx?:number};
+  buttonLabel: string; buttonHref?:string; items: string[]; mediaId?:string; presentation?:{backgroundColor?:string;color?:string;textAlign?:'left'|'center'|'right';paddingTopPx?:number;paddingBottomPx?:number;fontFamily?:string;fontSizePx?:number;fontWeight?:number;lineHeight?:number};
 };
 type Device = 'desktop' | 'mobile';
 const SITE_KEY = 'luxgrowth-websites-prototype-v1';
@@ -48,9 +48,9 @@ function getContents(): CmsContent[] {
 function makeSection(kind: SectionKind, page?: CmsContent): Section {
   const title = page?.title || 'O teu próximo projeto começa aqui';
   switch (kind) {
-    case 'hero': return { id:blockId(),kind,kicker:'BEM-VINDO',title,body:page?.excerpt || 'Uma experiência digital feita para pessoas.',buttonLabel:'Descobrir mais',items:[] };
+    case 'hero': return { id:blockId(),kind,kicker:'BEM-VINDO',title,body:page?.excerpt || 'Uma experiência digital feita para pessoas.',buttonLabel:'Descobrir mais',buttonHref:'#contacto',items:[] };
     case 'features': return { id:blockId(),kind,kicker:'O QUE FAZEMOS',title:'A nossa diferença',body:'Conhece o que nos torna únicos.',buttonLabel:'',items:['Qualidade e atenção','Soluções personalizadas','Resultados com impacto'] };
-    case 'cta': return { id:blockId(),kind,kicker:'VAMOS CONVERSAR',title:'Preparado para começar?',body:'Fala connosco e descobre como podemos ajudar.',buttonLabel:'Entrar em contacto',items:[] };
+    case 'cta': return { id:blockId(),kind,kicker:'VAMOS CONVERSAR',title:'Preparado para começar?',body:'Fala connosco e descobre como podemos ajudar.',buttonLabel:'Entrar em contacto',buttonHref:'#contacto',items:[] };
     case 'text': return { id:blockId(),kind,kicker:'SOBRE NÓS',title:'A nossa história',body:page?.body || 'Conta a história da tua marca e apresenta os teus serviços.',buttonLabel:'',items:[] };
   }
 }
@@ -61,6 +61,10 @@ function existingDrafts(): Record<string, Section[]> {
   const value = fromStorage<Record<string, Section[]>>(DRAFT_KEY, {});
   return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
 }
+function safeLink(value:string):boolean {
+  const href=value.trim();
+  return /^#[a-zA-Z0-9_-]{1,80}$/.test(href) || /^\/(?!\/)[a-zA-Z0-9/_#?=&.%-]{0,300}$/.test(href) || /^https:\/\/[a-zA-Z0-9.-]+(?::443)?(?:\/[a-zA-Z0-9/_#?=&.%-]*)?$/.test(href);
+}
 function sectionLabel(kind: SectionKind) { return TYPES.find(t=>t.kind===kind)?.label || kind; }
 function EditorPreview({ sections, selectedId, onSelect, site, device, mediaUrls }: {
   sections: Section[];selectedId:string|null;onSelect:(id:string)=>void;site:Site;device:Device;mediaUrls:Record<string,string>
@@ -69,12 +73,16 @@ function EditorPreview({ sections, selectedId, onSelect, site, device, mediaUrls
     <div className="lg-studio-preview-browser">
       <div className="lg-studio-browser-top"><span/><span/><span/><small>{site.domain || 'website.example'}</small></div>
       <div className="lg-studio-preview-navigation"><strong>{site.name}</strong><span>Início　 Serviços　 Contactos</span></div>
-      {sections.map((section,index)=><section className={'lg-studio-render lg-studio-render--'+section.kind+(section.id===selectedId?' is-selected':'')} key={section.id} style={{backgroundColor:section.presentation?.backgroundColor||undefined,color:section.presentation?.color||undefined,textAlign:section.presentation?.textAlign||undefined,'--lg-pad-top':section.presentation?.paddingTopPx===undefined?undefined:section.presentation.paddingTopPx+'px','--lg-pad-bottom':section.presentation?.paddingBottomPx===undefined?undefined:section.presentation.paddingBottomPx+'px'} as CSSProperties}>
+      {sections.map((section,index)=><section className={'lg-studio-render lg-studio-render--'+section.kind+(section.id===selectedId?' is-selected':'')} key={section.id} style={{backgroundColor:section.presentation?.backgroundColor||undefined,color:section.presentation?.color||undefined,textAlign:section.presentation?.textAlign||undefined,'--lg-pad-top':section.presentation?.paddingTopPx===undefined?undefined:section.presentation.paddingTopPx+'px','--lg-pad-bottom':section.presentation?.paddingBottomPx===undefined?undefined:section.presentation.paddingBottomPx+'px',
+  '--lg-title-font':section.presentation?.fontFamily||undefined,
+  '--lg-title-size':section.presentation?.fontSizePx===undefined?undefined:section.presentation.fontSizePx+'px',
+  '--lg-title-weight':section.presentation?.fontWeight||undefined,
+  '--lg-title-leading':section.presentation?.lineHeight||undefined} as CSSProperties}>
         <button type="button" className="lg-studio-render-edit" onClick={()=>onSelect(section.id)}
           aria-label={'Editar secção '+(index+1)+': '+sectionLabel(section.kind)}>Editar <span>{index+1}</span></button>
         {section.kind==='hero' && <div className="lg-studio-hero">
           {section.mediaId&&mediaUrls[section.mediaId]&&<img className="lg-studio-hero-media" src={mediaUrls[section.mediaId]} alt="" />}
-          <small>{section.kicker}</small><h2>{section.title}</h2><p>{section.body}</p><span className="lg-studio-cta-button">{section.buttonLabel || 'Saiba mais'}</span>
+          <small>{section.kicker}</small><h2>{section.title}</h2><p>{section.body}</p><span className="lg-studio-cta-button" title={section.buttonHref&&safeLink(section.buttonHref)?'Destino configurado: '+section.buttonHref:'Botão demonstrativo sem destino validado'}>{section.buttonLabel || 'Saiba mais'}</span>
           <div className="lg-studio-hero-orb" aria-hidden="true"/>
         </div>}
         {section.kind==='text' && <div className="lg-studio-text-section">
@@ -85,7 +93,7 @@ function EditorPreview({ sections, selectedId, onSelect, site, device, mediaUrls
           <div className="lg-studio-features-grid">{section.items.map((item,i)=><div key={i}><span>0{i+1}</span><strong>{item}</strong></div>)}</div>
         </div>}
         {section.kind==='cta' && <div className="lg-studio-cta-section">
-          <small>{section.kicker}</small><h2>{section.title}</h2><p>{section.body}</p><span className="lg-studio-cta-button">{section.buttonLabel || 'Contactar'}</span>
+          <small>{section.kicker}</small><h2>{section.title}</h2><p>{section.body}</p><span className="lg-studio-cta-button" title={section.buttonHref&&safeLink(section.buttonHref)?'Destino configurado: '+section.buttonHref:'Botão demonstrativo sem destino validado'}>{section.buttonLabel || 'Contactar'}</span>
         </div>}
       </section>)}
       {!sections.length && <div className="lg-studio-empty-canvas">Adiciona a primeira secção no painel lateral.</div>}
@@ -129,7 +137,7 @@ export function WebsiteStudioPage() {
     setUndo(prev=>[...prev.slice(-29),copySections(blocks)]);
     setRedo([]);setBlocks(next);setSelectedId(targetId);setDirty(true);setMessage('');
   };
-  const change=(key: 'kicker'|'title'|'body'|'buttonLabel',value:string)=>{
+  const change=(key: 'kicker'|'title'|'body'|'buttonLabel'|'buttonHref',value:string)=>{
     if(!selected)return;
     commit(blocks.map(b=>b.id===selected.id?{...b,[key]:value}:b),selected.id);
   };
@@ -137,7 +145,7 @@ export function WebsiteStudioPage() {
     if(!selected)return;
     commit(blocks.map(b=>b.id===selected.id?{...b,items:b.items.map((item,i)=>i===index?value:item)}:b),selected.id);
   };
-  const changePresentation=(key:'backgroundColor'|'color'|'textAlign'|'paddingTopPx'|'paddingBottomPx',value:string|number|undefined)=>{
+  const changePresentation=(key:'backgroundColor'|'color'|'textAlign'|'paddingTopPx'|'paddingBottomPx'|'fontFamily'|'fontSizePx'|'fontWeight'|'lineHeight',value:string|number|undefined)=>{
     if(!selected)return;
     const presentation={...selected.presentation};
     if(value===undefined)delete presentation[key];
@@ -279,7 +287,13 @@ export function WebsiteStudioPage() {
           <label>Etiqueta <input value={selected.kicker} maxLength={90} onChange={e=>change('kicker',e.target.value)}/></label>
           <label>Título <textarea rows={2} value={selected.title} maxLength={180} onChange={e=>change('title',e.target.value)}/></label>
           <label>Descrição / texto <textarea rows={5} value={selected.body} maxLength={1000} onChange={e=>change('body',e.target.value)}/></label>
-          {(selected.kind==='hero'||selected.kind==='cta')&&<label>Texto do botão <input value={selected.buttonLabel} maxLength={65} onChange={e=>change('buttonLabel',e.target.value)}/></label>}
+          {(selected.kind==='hero'||selected.kind==='cta')&&<>
+            <label>Texto do botão <input value={selected.buttonLabel} maxLength={65} onChange={e=>change('buttonLabel',e.target.value)}/></label>
+            <label>Destino do botão <input type="text" placeholder="#contacto ou https://..." value={selected.buttonHref??'#contacto'} maxLength={320} onChange={e=>change('buttonHref',e.target.value)}/></label>
+            <p className={'lg-studio-link-note'+(safeLink(selected.buttonHref??'#contacto')?'':' is-invalid')}>
+              {safeLink(selected.buttonHref??'#contacto')?'Destino válido. No protótipo, os botões não abrem páginas externas.':'Destino inválido. Usa uma âncora #id, uma rota /... ou um endereço HTTPS.'}
+            </p>
+          </>}
           {selected.kind==='features'&&<div className="lg-studio-feature-fields"><strong>Benefícios</strong>{selected.items.map((v,i)=><label key={i}>Benefício {i+1} <input value={v} maxLength={100} onChange={e=>changeItem(i,e.target.value)}/></label>)}</div>}
           {selected.kind==='hero'&&<div className="lg-studio-design-fields">
             <strong>Imagem de destaque</strong><button type="button" className="lg-studio-button" onClick={()=>setMediaOpen(true)}><ImageIcon size={15}/> Escolher imagem</button>
@@ -293,6 +307,33 @@ export function WebsiteStudioPage() {
             <label>Alinhamento <select value={selected.presentation?.textAlign||'left'} onChange={e=>changePresentation('textAlign',e.target.value as 'left'|'center'|'right')}><option value="left">Esquerda</option><option value="center">Centro</option><option value="right">Direita</option></select></label>
             <label>Espaço superior (px) <input type="number" min="0" max="320" value={selected.presentation?.paddingTopPx??46} onChange={e=>changePresentation('paddingTopPx',Math.min(320,Math.max(0,Number(e.target.value)||0)))}/></label>
             <label>Espaço inferior (px) <input type="number" min="0" max="320" value={selected.presentation?.paddingBottomPx??46} onChange={e=>changePresentation('paddingBottomPx',Math.min(320,Math.max(0,Number(e.target.value)||0)))}/></label>
+          </div>
+          <div className="lg-studio-design-fields"><strong>Tipografia do título</strong>
+            <label>Fonte <select value={selected.presentation?.fontFamily||''} onChange={e=>changePresentation('fontFamily',e.target.value||undefined)}>
+              <option value="">Original do website</option>
+              <option value="Arial, sans-serif">Arial</option>
+              <option value="Georgia, serif">Georgia</option>
+              <option value="Verdana, sans-serif">Verdana</option>
+              <option value="Tahoma, sans-serif">Tahoma</option>
+              <option value="Trebuchet MS, sans-serif">Trebuchet MS</option>
+            </select></label>
+            <label>Tamanho (px) <input type="number" min="8" max="160" placeholder="Original" value={selected.presentation?.fontSizePx??''} onChange={e=>changePresentation('fontSizePx',e.target.value===''?undefined:Math.min(160,Math.max(8,Math.round(Number(e.target.value)||8))))}/></label>
+            <label>Peso <select value={selected.presentation?.fontWeight??''} onChange={e=>changePresentation('fontWeight',e.target.value===''?undefined:Number(e.target.value))}>
+              <option value="">Original do website</option><option value="300">Leve (300)</option>
+              <option value="400">Normal (400)</option><option value="500">Médio (500)</option>
+              <option value="600">Semi-negrito (600)</option><option value="700">Negrito (700)</option>
+              <option value="800">Extra-negrito (800)</option>
+            </select></label>
+            <label>Altura da linha <select value={selected.presentation?.lineHeight??''} onChange={e=>changePresentation('lineHeight',e.target.value===''?undefined:Number(e.target.value))}>
+              <option value="">Original do website</option><option value="1">Compacto (1)</option>
+              <option value="1.2">Normal (1.2)</option><option value="1.5">Amplo (1.5)</option><option value="1.8">Muito amplo (1.8)</option>
+            </select></label>
+            <button type="button" className="lg-studio-design-clear" onClick={()=>{
+              if(!selected)return;
+              const presentation={...selected.presentation};
+              delete presentation.fontFamily;delete presentation.fontSizePx;delete presentation.fontWeight;delete presentation.lineHeight;
+              commit(blocks.map(b=>b.id===selected.id?{...b,presentation}:b),selected.id);
+            }}>Repor tipografia original</button>
           </div>
           <div className="lg-studio-inspector-actions">
             <button type="button" onClick={()=>move(-1)} disabled={blocks.findIndex(b=>b.id===selected.id)===0} title="Mover para cima"><ArrowUp size={16}/></button>
