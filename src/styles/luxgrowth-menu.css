@@ -222,3 +222,56 @@
 @media(prefers-reduced-motion:reduce) {
  .lg-section-caret,.lg-vertical-list {transition:none;animation:none;}
 }
+
+/* V4 — navigation is always horizontal, with optional sidebar disclosures.
+   Do not alter dashboard panels, colors or charts. */
+.lg-sidebar--unified .lg-nav--sections { padding-top:8px; }
+.lg-sidebar--unified .lg-section-row {
+  display:flex;
+  align-items:center;
+  gap:3px;
+  min-width:0;
+}
+.lg-sidebar--unified .lg-section-row > .lg-groupbtn {
+  flex:1 1 auto;
+  min-width:0;
+}
+.lg-shell-expanded .lg-sidebar--unified .lg-section-row > .lg-groupbtn {
+  width:auto;
+  flex:1 1 0;
+}
+.lg-sidebar--unified .lg-section-disclosure {
+  flex:0 0 30px;
+  width:30px;
+  height:36px;
+  display:grid;
+  place-items:center;
+  color:#b1c5ae;
+  border:1px solid transparent;
+  border-radius:10px;
+  cursor:pointer;
+}
+.lg-sidebar--unified .lg-section-disclosure:hover,
+.lg-sidebar--unified .lg-section-disclosure[aria-expanded="true"] {
+  color:#c9f36a;
+  background:rgba(201,243,106,.12);
+}
+.lg-sidebar--unified .lg-section-disclosure:focus-visible {
+  outline:2px solid #c9f36a;
+  outline-offset:2px;
+}
+.lg-sidebar--unified .lg-vertical-list {
+  margin:3px 3px 9px 20px;
+  padding:3px 0 3px 9px;
+}
+.lg-sidebar--unified .lg-vertical-node,
+.lg-sidebar--unified .lg-section-container { min-width:0;max-width:100%; }
+.lg-sidebar--unified .lg-nav { overflow-x:hidden;overflow-y:auto; }
+@media(max-width:820px) {
+  .lg-sidebar--unified.lg-sidebar-mobile-open .lg-section-row > .lg-groupbtn {
+    flex:1 1 auto;width:auto;min-width:0;
+  }
+  .lg-sidebar--unified.lg-sidebar-mobile-open .lg-section-disclosure {
+    display:grid;
+  }
+}
