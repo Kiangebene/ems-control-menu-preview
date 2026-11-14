@@ -15,6 +15,7 @@ on:
       - feat/luxgrowth-studio-direct-photo-colors-v1
       - feat/luxgrowth-studio-inline-content-v1
       - feat/luxgrowth-studio-component-catalog-v1
+      - feat/luxgrowth-studio-navigation-tabs-v1
   workflow_dispatch:
 permissions:
   contents: read

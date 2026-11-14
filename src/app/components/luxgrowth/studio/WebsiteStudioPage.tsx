@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { ArrowDown, ArrowUp, ChevronDown, Copy, Download, Eye, FileText, Globe2, GripVertical, ImageIcon, LayoutTemplate, Monitor, Plus, Redo2, RotateCcw, Save, Smartphone, Trash2, Type, Undo2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronDown, Copy, Download, Eye, FileText, Globe2, GripVertical, ImageIcon, LayoutTemplate, Layers3, ListTree, Monitor, Plus, Redo2, RotateCcw, Save, Smartphone, Trash2, Type, Undo2 } from 'lucide-react';
 import { previewNativeBlocks } from './nativeBlockAdapter';
 import { LocalMediaLibrary, usePreviewMedia } from './LocalMediaLibrary';
 import { HeroImageLayer } from './HeroImageLayer';
@@ -7,6 +7,7 @@ import { StudioColorField } from './StudioColorField';
 import { StudioInlineText } from './StudioInlineText';
 import { StudioComponentCatalog } from './StudioComponentCatalog';
 import './studio-component-catalog.css';
+import './studio-sidebar-tabs.css';
 
 type Site = { id: string; name: string; domain: string; accent?: string; description?: string };
 type CmsContent = { id: string; websiteId: string; title: string; body: string; excerpt: string; type?: string; slug?: string };
@@ -138,6 +139,7 @@ export function WebsiteStudioPage() {
   const [dirty,setDirty]=useState(false);
   const [message,setMessage]=useState('');
   const [showHelp,setShowHelp]=useState(false);
+  const [sidebarTab,setSidebarTab]=useState<'add'|'layers'|'pages'|'sections'>('sections');
   const [draggedId,setDraggedId]=useState<string|null>(null);
   const [mediaOpen,setMediaOpen]=useState(false);
   const media=usePreviewMedia(siteId);
@@ -287,10 +289,32 @@ export function WebsiteStudioPage() {
     {showHelp&&<div className="lg-studio-notice" role="note"><strong>Como testar:</strong> escolhe um bloco na coluna esquerda, edita-o na direita e vê o resultado ao centro. Podes adicionar, duplicar, arrastar camadas para reorganizar, desfazer/refazer, guardar e exportar um JSON compatível em estrutura com os blocos originais. O JSON necessita de validação real antes da utilização. O editor não publica websites.</div>}
     {message&&<div className="lg-studio-notice" role="status">{message}</div>}
     <div className="lg-studio-columns">
-      <aside className="lg-studio-panel lg-studio-layers" aria-label="Camadas e secções">
-        <div className="lg-studio-panel-heading"><LayoutTemplate size={17}/><strong>Estrutura da página</strong></div>
-        <p className="lg-studio-panel-subtitle">{blocks.length} secções · {page?.title || 'Página inicial'}</p>
-        <div className="lg-studio-layer-list">
+      <aside className="lg-studio-panel lg-studio-layers" aria-label="Biblioteca e estrutura do website">
+        <nav className="lg-studio-sidebar-tabs" role="tablist" aria-label="Ferramentas de edição">
+{([
+  ['add','Adicionar',Plus],
+  ['layers','Camadas',Layers3],
+  ['pages','Páginas',FileText],
+  ['sections','Secções',ListTree],
+] as const).map(([key,label,Icon])=>
+  <button key={key} type="button" role="tab" id={'lg-studio-tab-'+key}
+    aria-controls="lg-studio-tab-content" aria-selected={sidebarTab===key}
+    className={sidebarTab===key?'is-active':''}
+    onClick={()=>setSidebarTab(key)}><Icon size={14}/><span>{label}</span></button>
+)}
+</nav>
+        <div id="lg-studio-tab-content" role="tabpanel" aria-labelledby={'lg-studio-tab-'+sidebarTab}>
+          {sidebarTab==='add'&&<>
+            <div className="lg-studio-panel-heading"><Plus size={17}/><strong>Adicionar componentes</strong></div>
+            <p className="lg-studio-panel-subtitle">Pesquisa ou escolhe um componente para inserir na página.</p>
+            <StudioComponentCatalog onAdd={add}/>
+          </>}
+          {sidebarTab==='layers'&&<>
+            <div className="lg-studio-panel-heading"><Layers3 size={17}/><strong>Camadas</strong></div>
+            <p className="lg-studio-panel-subtitle">{site.name} / {page?.title || 'Página inicial'}</p>
+            <div className="lg-studio-layer-tree">
+              <div className="lg-studio-layer-tree-root"><LayoutTemplate size={14}/> {page?.title || 'Página inicial'} <span>{blocks.length}</span></div>
+              <div className="lg-studio-layer-list">
           {blocks.map((block,i)=><button type="button" key={block.id} draggable
             onDragStart={event=>{setDraggedId(block.id);event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',block.id)}}
             onDragOver={event=>{event.preventDefault();event.dataTransfer.dropEffect='move'}}
@@ -301,8 +325,39 @@ export function WebsiteStudioPage() {
             <GripVertical size={15}/><span><strong>{sectionLabel(block.kind)}</strong><small>{block.title||'Sem título'}</small></span><em>{i+1}</em>
           </button>)}
         </div>
-        <StudioComponentCatalog onAdd={add} />
-        <button type="button" className="lg-studio-reset" onClick={reset}><RotateCcw size={15}/> Repor estrutura</button>
+            </div>
+            <p className="lg-studio-tab-hint">Seleciona uma camada para editar. Arrasta as secções para mudar a ordem.</p>
+          </>}
+          {sidebarTab==='pages'&&<>
+            <div className="lg-studio-panel-heading"><FileText size={17}/><strong>Páginas</strong></div>
+            <p className="lg-studio-panel-subtitle">{availablePages.length} páginas de {site.name}</p>
+            <div className="lg-studio-page-list" aria-label="Páginas deste website">
+  {availablePages.map(p=><button type="button" key={p.id}
+    onClick={()=>choosePage(p.id)} className={'lg-studio-page-button'+(p.id===effectivePageId?' is-selected':'')}
+    aria-current={p.id===effectivePageId?'page':undefined}>
+    <FileText size={15}/><span><strong>{p.title}</strong><small>{p.slug ? '/'+p.slug : 'Página local'}</small></span>
+  </button>)}
+</div>
+            <p className="lg-studio-tab-hint">As páginas vêm do CMS local do protótipo. A criação, SEO e publicação serão ligados ao Growth OS numa fase posterior.</p>
+          </>}
+          {sidebarTab==='sections'&&<>
+            <div className="lg-studio-panel-heading"><LayoutTemplate size={17}/><strong>Estrutura da página</strong></div>
+            <p className="lg-studio-panel-subtitle">{blocks.length} secções · {page?.title || 'Página inicial'}</p>
+            <div className="lg-studio-layer-list">
+          {blocks.map((block,i)=><button type="button" key={block.id} draggable
+            onDragStart={event=>{setDraggedId(block.id);event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',block.id)}}
+            onDragOver={event=>{event.preventDefault();event.dataTransfer.dropEffect='move'}}
+            onDrop={event=>{event.preventDefault();dropLayer(block.id)}}
+            onDragEnd={()=>setDraggedId(null)}
+            className={'lg-studio-layer'+(selectedId===block.id?' is-selected':'')+(draggedId===block.id?' is-dragging':'')}
+            title="Arrastar para reorganizar" onClick={()=>setSelectedId(block.id)}>
+            <GripVertical size={15}/><span><strong>{sectionLabel(block.kind)}</strong><small>{block.title||'Sem título'}</small></span><em>{i+1}</em>
+          </button>)}
+        </div>
+            <StudioComponentCatalog onAdd={add}/>
+            <button type="button" className="lg-studio-reset" onClick={reset}><RotateCcw size={15}/> Repor estrutura</button>
+          </>}
+        </div>
       </aside>
       <div className="lg-studio-canvas-area" aria-label="Pré-visualização da página">
         <div className="lg-studio-canvas-header"><span><Globe2 size={15}/> {site.domain}</span><span>{device==='desktop'?'Desktop':'Mobile'} · {dirty?'Alterações não guardadas':'Rascunho local'}</span></div>
