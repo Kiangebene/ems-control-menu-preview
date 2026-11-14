@@ -27,7 +27,7 @@ export function Layout(){
  useEffect(()=>{document.documentElement.classList.toggle('dark',isDark);return()=>document.documentElement.classList.remove('dark')},[isDark]);
  return <div className="ems-preserved-app lg-app">
   <LuxGrowthSidebar currentPage={currentPage} onPageChange={navigate} isDark={isDark} onThemeToggle={()=>setIsDark(v=>!v)} userName={userName}/>
-  <main id="main-content" className="ems-preserved-content lg-main">
+  <main id="main-content" className={"ems-preserved-content lg-main" + (currentPage === "lg/websites-conteudos/website-studio-editor" ? " lg-main--studio" : "")}>
    <LuxGrowthTopNav currentPage={currentPage} onPageChange={navigate} />
    <div className="lg-current-page" key={currentPage}>
    {currentPage==='dashboard'&&<Dashboard/>}
