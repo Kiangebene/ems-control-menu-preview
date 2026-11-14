@@ -172,3 +172,14 @@
 .lg-studio-media-footer{border-top:1px solid var(--border);margin-top:20px;padding-top:16px;display:flex;gap:10px;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted-foreground)}
 .lg-studio-media-footer button{text-decoration:underline;cursor:pointer}
 @media(max-width:740px){.lg-studio-media-modal{padding:14px}.lg-studio-media-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Studio typography and CTA inspector — scoped to preview only. */
+.lg-studio-render h2 {
+  font-family: var(--lg-title-font, inherit);
+  font-size: var(--lg-title-size, clamp(20px,2.8vw,34px));
+  font-weight: var(--lg-title-weight, 750);
+  line-height: var(--lg-title-leading, 1.15);
+}
+.lg-studio-link-note {font-size:10px;line-height:1.5;color:var(--muted-foreground);margin:-5px 0 12px;}
+.lg-studio-link-note.is-invalid{color:#b74c3b;}
+.lg-studio-design-fields input[type="number"] {width:100%;min-width:0;border:1px solid var(--border);border-radius:9px;padding:9px;background:var(--background);color:var(--foreground);}
