@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { ArrowDown, ArrowUp, ChevronDown, Copy, Download, Eye, FileText, Globe2, GripVertical, ImageIcon, LayoutTemplate, Monitor, Plus, Redo2, RotateCcw, Save, Smartphone, Trash2, Type, Undo2 } from 'lucide-react';
 import { previewNativeBlocks } from './nativeBlockAdapter';
 import { LocalMediaLibrary, usePreviewMedia } from './LocalMediaLibrary';
+import { HeroImageLayer } from './HeroImageLayer';
+import { StudioColorField } from './StudioColorField';
 
 type Site = { id: string; name: string; domain: string; accent?: string; description?: string };
 type CmsContent = { id: string; websiteId: string; title: string; body: string; excerpt: string; type?: string; slug?: string };
 type SectionKind = 'hero' | 'text' | 'features' | 'cta';
-type HeroImageSettings = {opacityPct?:number;positionX?:number;positionY?:number;fit?:'cover'|'contain'};
+type HeroImageSettings = {opacityPct?:number;positionX?:number;positionY?:number;fit?:'cover'|'contain';zoomPct?:number;offsetX?:number;offsetY?:number};
 type Section = {
   id: string; kind: SectionKind; kicker: string; title: string; body: string;
   buttonLabel: string; buttonHref?:string; items: string[]; mediaId?:string; heroImage?:HeroImageSettings; presentation?:{backgroundColor?:string;color?:string;textAlign?:'left'|'center'|'right';paddingTopPx?:number;paddingBottomPx?:number;fontFamily?:string;fontSizePx?:number;fontWeight?:number;lineHeight?:number};
@@ -67,8 +69,8 @@ function safeLink(value:string):boolean {
   return /^#[a-zA-Z0-9_-]{1,80}$/.test(href) || /^\/(?!\/)[a-zA-Z0-9/_#?=&.%-]{0,300}$/.test(href) || /^https:\/\/[a-zA-Z0-9.-]+(?::443)?(?:\/[a-zA-Z0-9/_#?=&.%-]*)?$/.test(href);
 }
 function sectionLabel(kind: SectionKind) { return TYPES.find(t=>t.kind===kind)?.label || kind; }
-function EditorPreview({ sections, selectedId, onSelect, site, device, mediaUrls }: {
-  sections: Section[];selectedId:string|null;onSelect:(id:string)=>void;site:Site;device:Device;mediaUrls:Record<string,string>
+function EditorPreview({ sections, selectedId, onSelect, site, device, mediaUrls, onImageChange }: {
+  sections: Section[];selectedId:string|null;onSelect:(id:string)=>void;site:Site;device:Device;mediaUrls:Record<string,string>;onImageChange:(id:string,next:HeroImageSettings)=>void
 }) {
   return <div className={'lg-studio-viewport lg-studio-viewport--'+device} style={{'--studio-accent':site.accent || '#c9f36a'} as CSSProperties}>
     <div className="lg-studio-preview-browser">
@@ -82,8 +84,7 @@ function EditorPreview({ sections, selectedId, onSelect, site, device, mediaUrls
         <button type="button" className="lg-studio-render-edit" onClick={()=>onSelect(section.id)}
           aria-label={'Editar secção '+(index+1)+': '+sectionLabel(section.kind)}>Editar <span>{index+1}</span></button>
         {section.kind==='hero' && <div className="lg-studio-hero">
-          {section.mediaId&&mediaUrls[section.mediaId]&&<img className="lg-studio-hero-media" src={mediaUrls[section.mediaId]} alt=""
-            style={{opacity:(section.heroImage?.opacityPct??22)/100,objectPosition:(section.heroImage?.positionX??50)+'% '+(section.heroImage?.positionY??50)+'%',objectFit:section.heroImage?.fit??'cover'}} />}
+          {section.mediaId&&mediaUrls[section.mediaId]&&<HeroImageLayer src={mediaUrls[section.mediaId]} settings={section.heroImage} onCommit={next=>onImageChange(section.id,next)} />}
           <small>{section.kicker}</small><h2>{section.title}</h2><p>{section.body}</p><span className="lg-studio-cta-button" title={section.buttonHref&&safeLink(section.buttonHref)?'Destino configurado: '+section.buttonHref:'Botão demonstrativo sem destino validado'}>{section.buttonLabel || 'Saiba mais'}</span>
           <div className="lg-studio-hero-orb" aria-hidden="true"/>
         </div>}
@@ -162,6 +163,9 @@ export function WebsiteStudioPage() {
     if(!selected || selected.kind!=='hero')return;
     const heroImage={...selected.heroImage,[key]:value};
     commit(blocks.map(b=>b.id===selected.id?{...b,heroImage}:b),selected.id);
+  };
+  const commitCanvasImage=(sectionId:string,next:HeroImageSettings)=>{
+    commit(blocks.map(b=>b.id===sectionId?{...b,heroImage:next}:b),sectionId);
   };
   const resetHeroImage=()=>{
     if(!selected || selected.kind!=='hero')return;
@@ -289,7 +293,7 @@ export function WebsiteStudioPage() {
       </aside>
       <div className="lg-studio-canvas-area" aria-label="Pré-visualização da página">
         <div className="lg-studio-canvas-header"><span><Globe2 size={15}/> {site.domain}</span><span>{device==='desktop'?'Desktop':'Mobile'} · {dirty?'Alterações não guardadas':'Rascunho local'}</span></div>
-        <EditorPreview sections={blocks} selectedId={selectedId} onSelect={setSelectedId} site={site} device={device} mediaUrls={mediaUrls}/>
+        <EditorPreview sections={blocks} selectedId={selectedId} onSelect={setSelectedId} site={site} device={device} mediaUrls={mediaUrls} onImageChange={commitCanvasImage}/>
       </div>
       <aside className="lg-studio-panel lg-studio-inspector" aria-label="Propriedades da secção selecionada">
         <div className="lg-studio-panel-heading"><Type size={17}/><strong>Propriedades</strong></div>
@@ -310,33 +314,22 @@ export function WebsiteStudioPage() {
             <strong>Imagem de destaque</strong><button type="button" className="lg-studio-button" onClick={()=>setMediaOpen(true)}><ImageIcon size={15}/> Escolher imagem</button>
             {selected.mediaId&&(mediaUrls[selected.mediaId]?<div className="lg-studio-media-selected"><img src={mediaUrls[selected.mediaId]} alt="Imagem do Hero"/><button type="button" onClick={()=>changeMedia(undefined)}>Remover associação</button></div>:<p className="lg-studio-panel-subtitle">Imagem indisponível neste navegador.</p>)}
             {selected.mediaId&&mediaUrls[selected.mediaId]&&<div className="lg-studio-image-controls">
-              <label>Visibilidade da imagem ({selected.heroImage?.opacityPct??22}%)
+              <p className="lg-studio-panel-subtitle">Arrasta a fotografia diretamente sobre o Hero para ajustar a posição.</p>
+              <label>Zoom ({selected.heroImage?.zoomPct??100}%)
+                <input type="range" min="50" max="300" step="5" value={selected.heroImage?.zoomPct??100}
+                  onChange={e=>changeHeroImage('zoomPct',Number(e.target.value))}/>
+              </label>
+              <label>Visibilidade ({selected.heroImage?.opacityPct??22}%)
                 <input type="range" min="0" max="100" step="5" value={selected.heroImage?.opacityPct??22}
                   onChange={e=>changeHeroImage('opacityPct',Number(e.target.value))}/>
               </label>
-              <label>Enquadramento
-                <select value={selected.heroImage?.fit??'cover'} onChange={e=>changeHeroImage('fit',e.target.value as 'cover'|'contain')}>
-                  <option value="cover">Preencher espaço (cortar imagem)</option>
-                  <option value="contain">Mostrar imagem completa</option>
-                </select>
-              </label>
-              <label>Posição horizontal ({selected.heroImage?.positionX??50}%)
-                <input type="range" min="0" max="100" step="5" value={selected.heroImage?.positionX??50}
-                  onChange={e=>changeHeroImage('positionX',Number(e.target.value))}/>
-              </label>
-              <label>Posição vertical ({selected.heroImage?.positionY??50}%)
-                <input type="range" min="0" max="100" step="5" value={selected.heroImage?.positionY??50}
-                  onChange={e=>changeHeroImage('positionY',Number(e.target.value))}/>
-              </label>
-              <button type="button" className="lg-studio-design-clear" onClick={resetHeroImage}>Repor enquadramento original</button>
-              <p className="lg-studio-panel-subtitle">Ajustes visíveis apenas no editor local. A fotografia não é enviada para servidores.</p>
+              <button type="button" className="lg-studio-design-clear" onClick={resetHeroImage}>Repor posição e zoom</button>
+              <p className="lg-studio-panel-subtitle">O ajuste mantém-se no rascunho local. Não altera o ficheiro original.</p>
             </div>}
           </div>}
           <div className="lg-studio-design-fields"><strong>Design e espaçamento</strong>
-            <label>Cor de fundo <input type="color" value={selected.presentation?.backgroundColor||'#ffffff'} onChange={e=>changePresentation('backgroundColor',e.target.value)}/></label>
-            <button type="button" className="lg-studio-design-clear" onClick={()=>changePresentation('backgroundColor',undefined)}>Repor fundo original</button>
-            <label>Cor do texto <input type="color" value={selected.presentation?.color||'#26352a'} onChange={e=>changePresentation('color',e.target.value)}/></label>
-            <button type="button" className="lg-studio-design-clear" onClick={()=>changePresentation('color',undefined)}>Repor texto original</button>
+            <StudioColorField label="Cor de fundo" value={selected.presentation?.backgroundColor} fallback="#FFFFFF" onChange={value=>changePresentation('backgroundColor',value)}/>
+            <StudioColorField label="Cor do texto" value={selected.presentation?.color} fallback="#26352A" onChange={value=>changePresentation('color',value)}/>
             <label>Alinhamento <select value={selected.presentation?.textAlign||'left'} onChange={e=>changePresentation('textAlign',e.target.value as 'left'|'center'|'right')}><option value="left">Esquerda</option><option value="center">Centro</option><option value="right">Direita</option></select></label>
             <label>Espaço superior (px) <input type="number" min="0" max="320" value={selected.presentation?.paddingTopPx??46} onChange={e=>changePresentation('paddingTopPx',Math.min(320,Math.max(0,Number(e.target.value)||0)))}/></label>
             <label>Espaço inferior (px) <input type="number" min="0" max="320" value={selected.presentation?.paddingBottomPx??46} onChange={e=>changePresentation('paddingBottomPx',Math.min(320,Math.max(0,Number(e.target.value)||0)))}/></label>
