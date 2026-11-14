@@ -1,0 +1,95 @@
+/* Website Studio V1 — isolated UI styling. Preserves all existing dashboards and navigation. */
+.lg-studio{padding-top:25px;}
+.lg-studio-intro{margin-bottom:15px}
+.lg-studio-intro h1{font-size:clamp(28px,3vw,36px)}
+.lg-studio-toolbar{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:9px;background:var(--card);border:1px solid var(--border);border-radius:17px;padding:12px 14px;margin-bottom:14px}
+.lg-studio-toolbar>label{display:flex;align-items:center;gap:8px;color:var(--muted-foreground);font-size:11px;min-width:0;border:1px solid var(--border);border-radius:10px;background:var(--background);padding:0 9px;min-height:38px}
+.lg-studio-toolbar>label select{background:transparent;max-width:180px;min-width:80px;color:var(--foreground);font-size:11px;font-weight:700;border:0;outline:0;appearance:none;cursor:pointer}
+.lg-studio-toolbar>label svg{pointer-events:none}
+.lg-studio-toolbar-gap{flex:1 1 auto}
+.lg-studio-tools{display:flex;gap:3px;align-items:center;border:1px solid var(--border);border-radius:10px;padding:3px}
+.lg-studio-tools button{width:31px;height:30px;display:grid;place-items:center;border-radius:7px;color:var(--muted-foreground);cursor:pointer}
+.lg-studio-tools button.active{background:#c9f36a;color:#17240d}
+.lg-studio-tools button:disabled,.lg-studio-inspector-actions button:disabled{opacity:.3;cursor:not-allowed}
+.lg-studio-button{display:inline-flex;justify-content:center;align-items:center;gap:6px;white-space:nowrap;font-size:11px;font-weight:700;min-height:37px;padding:9px 12px;border:1px solid var(--border);border-radius:10px;cursor:pointer}
+.lg-studio-button--save{background:#c9f36a;color:#1d2c10;border-color:#c9f36a}
+.lg-studio-button:hover,.lg-studio-tools button:not(:disabled):hover{filter:brightness(.96)}
+.lg-studio-notice{padding:12px 16px;border-radius:12px;margin:0 0 13px;background:#eff8e5;border:1px solid #b8d89a;color:#496e31;font-size:12px}
+.lg-studio-columns{display:grid;grid-template-columns:minmax(190px,235px) minmax(340px,1fr) minmax(210px,250px);gap:12px;align-items:start;min-height:590px}
+.lg-studio-panel{min-width:0;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:15px;box-shadow:0 5px 20px #15231508}
+.lg-studio-panel-heading{display:flex;align-items:center;gap:9px;color:var(--foreground);font-size:12px}
+.lg-studio-panel-heading>svg{color:#78ac44}
+.lg-studio-panel-subtitle{color:var(--muted-foreground);font-size:11px;line-height:1.5;margin:9px 0 15px}
+.lg-studio-layer-list{display:flex;flex-direction:column;gap:6px}
+.lg-studio-layer{width:100%;display:flex;align-items:center;gap:7px;min-width:0;padding:10px 9px;border:1px solid var(--border);border-radius:10px;text-align:left;cursor:pointer}
+.lg-studio-layer:hover{background:var(--muted)}
+.lg-studio-layer.is-selected{border-color:#a7cf75;background:#eefaD9;color:#2b461a}
+.lg-studio-layer>svg{flex-shrink:0;opacity:.52}
+.lg-studio-layer>span{flex:1;min-width:0}
+.lg-studio-layer strong,.lg-studio-layer small{display:block;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
+.lg-studio-layer strong{font-size:11px}
+.lg-studio-layer small{font-size:10px;color:var(--muted-foreground);margin-top:3px}
+.lg-studio-layer em{font-size:10px;color:var(--muted-foreground);font-style:normal}
+.lg-studio-add-section{margin-top:20px;padding-top:15px;border-top:1px solid var(--border)}
+.lg-studio-add-section>strong{display:flex;align-items:center;gap:6px;font-size:11px;margin-bottom:11px}
+.lg-studio-add-section>div{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.lg-studio-add-section button{display:flex;align-items:flex-start;gap:4px;text-align:left;min-width:0;border-radius:9px;border:1px solid var(--border);padding:8px 6px;cursor:pointer}
+.lg-studio-add-section button:hover{border-color:#94bc5e;background:var(--muted)}
+.lg-studio-add-section button>svg{flex-shrink:0;color:#78ae4b}
+.lg-studio-add-section button>span{font-size:10px;font-weight:700;min-width:0}
+.lg-studio-add-section button small{display:block;font-size:8px;margin-top:4px;color:var(--muted-foreground);line-height:1.4;font-weight:400}
+.lg-studio-reset{display:flex;align-items:center;gap:7px;border-top:1px solid var(--border);width:100%;margin-top:14px;padding:14px 4px 3px;font-size:11px;color:var(--muted-foreground)}
+.lg-studio-canvas-area{min-width:0;background:#e9ece9;border-radius:16px;border:1px solid var(--border);overflow:hidden;min-height:590px;padding-bottom:22px}
+.lg-studio-canvas-header{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:12px 15px;color:#5e6863;font-size:10px}
+.lg-studio-canvas-header>span:first-child{display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.lg-studio-viewport{margin:0 auto;padding:0 12px;transition:max-width .2s ease;max-width:100%;color:#26352a}
+.lg-studio-viewport--mobile{max-width:340px}
+.lg-studio-preview-browser{background:white;border:1px solid #c8d0cb;border-radius:12px 12px 3px 3px;overflow:hidden;box-shadow:0 14px 35px #17291e18}
+.lg-studio-browser-top{display:flex;align-items:center;gap:4px;height:27px;padding:0 10px;background:#e7ece8}
+.lg-studio-browser-top>span{width:6px;height:6px;border-radius:50%;background:#9baaa0}
+.lg-studio-browser-top>small{margin:auto;color:#83948a;font-size:9px}
+.lg-studio-preview-navigation{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:18px 24px;font-size:10px}
+.lg-studio-preview-navigation>strong{font-size:13px}
+.lg-studio-preview-navigation>span{font-size:9px;color:#65776b}
+.lg-studio-render{position:relative;border:2px solid transparent;cursor:default}
+.lg-studio-render.is-selected{border-color:#8ebe49}
+.lg-studio-render-edit{position:absolute;right:7px;top:7px;z-index:2;background:#243a2d;color:#e9fae6;border-radius:8px;padding:6px 8px;display:flex;align-items:center;gap:6px;font-size:9px;opacity:0;cursor:pointer}
+.lg-studio-render:hover .lg-studio-render-edit,.lg-studio-render.is-selected .lg-studio-render-edit,.lg-studio-render-edit:focus-visible{opacity:1}
+.lg-studio-render-edit>span{opacity:.6}
+.lg-studio-hero,.lg-studio-text-section,.lg-studio-features-section,.lg-studio-cta-section{padding:46px clamp(18px,5%,55px)}
+.lg-studio-render small{letter-spacing:.16em;font-size:9px;font-weight:750}
+.lg-studio-render h2{font-size:clamp(20px,2.8vw,34px);line-height:1.15;letter-spacing:-.045em;font-weight:750;max-width:440px;margin:12px 0}
+.lg-studio-render p{font-size:11px;line-height:1.7;max-width:420px;color:#536256;white-space:pre-wrap;overflow-wrap:anywhere}
+.lg-studio-hero{background:color-mix(in srgb,var(--studio-accent),white 64%);position:relative;overflow:hidden}
+.lg-studio-hero>small,.lg-studio-hero>h2,.lg-studio-hero>p,.lg-studio-hero>.lg-studio-cta-button{position:relative;z-index:1}
+.lg-studio-hero-orb{position:absolute;right:-14%;top:-50%;width:55%;height:200%;border-radius:50%;background:radial-gradient(circle,var(--studio-accent),transparent 66%);opacity:.5}
+.lg-studio-cta-button{display:inline-flex;margin-top:13px;background:#223a2a;color:white;border-radius:9px;padding:10px 15px;font-size:10px;font-weight:700}
+.lg-studio-text-section{background:#fcfdfc}
+.lg-studio-features-section{background:#f3f7f2}
+.lg-studio-features-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:23px}
+.lg-studio-features-grid>div{background:#fff;border:1px solid #dae6d9;border-radius:10px;padding:15px;display:flex;flex-direction:column;gap:9px;min-height:75px}
+.lg-studio-features-grid span{font-size:10px;color:#649339}
+.lg-studio-features-grid strong{font-size:11px;overflow-wrap:anywhere}
+.lg-studio-cta-section{background:#273c2f;color:white}
+.lg-studio-cta-section p{color:#cdd9d0}
+.lg-studio-cta-section .lg-studio-cta-button{background:var(--studio-accent);color:#243321}
+.lg-studio-site-footer{text-align:center;padding:25px;background:#f9faf9;color:#8a968c;font-size:9px}
+.lg-studio-empty-canvas{padding:50px 20px;text-align:center;color:#697f6e;font-size:12px}
+.lg-studio-inspector label,.lg-studio-feature-fields label{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;font-size:10px;font-weight:700}
+.lg-studio-inspector label input,.lg-studio-inspector label textarea{width:100%;min-width:0;box-sizing:border-box;border:1px solid var(--border);border-radius:9px;background:var(--background);padding:10px;color:var(--foreground);font-size:11px;outline:0;resize:vertical;line-height:1.5}
+.lg-studio-inspector label input:focus,.lg-studio-inspector label textarea:focus{border-color:#9dcc68}
+.lg-studio-feature-fields{margin-top:17px;padding-top:12px;border-top:1px solid var(--border)}
+.lg-studio-feature-fields>strong{font-size:12px;display:block;margin-bottom:13px}
+.lg-studio-inspector-actions{display:flex;align-items:center;gap:6px;border-top:1px solid var(--border);padding-top:16px}
+.lg-studio-inspector-actions button{flex:1;display:grid;place-items:center;padding:9px 6px;border:1px solid var(--border);border-radius:9px;cursor:pointer}
+.lg-studio-inspector-actions button:not(:disabled):hover{background:var(--muted)}
+.lg-studio-inspector-actions .lg-studio-danger{color:#b05346}
+.lg-studio-footer-note{display:flex;align-items:center;gap:8px;color:var(--muted-foreground);font-size:11px;line-height:1.5;margin:16px 0}
+.lg-studio-footer-note svg{flex-shrink:0}
+.lg-studio-viewport--mobile .lg-studio-preview-navigation{padding:16px}
+.lg-studio-viewport--mobile .lg-studio-preview-navigation>span{font-size:7px}
+.lg-studio-viewport--mobile .lg-studio-hero,.lg-studio-viewport--mobile .lg-studio-text-section,.lg-studio-viewport--mobile .lg-studio-features-section,.lg-studio-viewport--mobile .lg-studio-cta-section{padding:32px 19px}
+.lg-studio-viewport--mobile .lg-studio-features-grid{grid-template-columns:1fr;gap:8px}
+@media(max-width:1180px){.lg-studio-columns{grid-template-columns:210px minmax(290px,1fr)}.lg-studio-inspector{grid-column:1/-1}.lg-studio-inspector .lg-studio-panel-heading{margin-bottom:12px}.lg-studio-inspector label{max-width:620px}}
+@media(max-width:740px){.lg-studio-columns{grid-template-columns:1fr}.lg-studio-layers,.lg-studio-inspector{grid-column:1/-1}.lg-studio-canvas-area{min-height:420px}.lg-studio-toolbar{gap:6px}.lg-studio-toolbar>label{flex:1 1 160px}.lg-studio-toolbar>label select{max-width:155px}}
+@media(prefers-reduced-motion:reduce){.lg-studio-viewport{transition:none}}
