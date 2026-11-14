@@ -11,6 +11,7 @@ on:
       - feat/luxgrowth-studio-native-blocks-v1
       - feat/luxgrowth-studio-media-inspector-v1
       - feat/luxgrowth-studio-typography-actions-v1
+      - feat/luxgrowth-studio-hero-image-controls-v1
   workflow_dispatch:
 permissions:
   contents: read
